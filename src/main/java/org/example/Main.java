@@ -18,7 +18,9 @@ public class Main {
                     "\n 3. Display CPU Info " +
                     "\n 4. Hardware Info" +
                     "\n 5. USB Devices" +
-                    "\n 6. Exit");
+                    "\n 6. Memory Info" +
+                    "\n 7. Exit");
+
             switch (sc.nextInt()) {
                 case 1:
                     ComputerSystem cs2 = si.getHardware().getComputerSystem();
@@ -157,7 +159,60 @@ public class Main {
                         System.out.println("Product ID : " + device.getProductId());
                     }
                 break;
-                case 6: // finally made an exit method
+
+                case 6:
+                    GlobalMemory memory = si.getHardware().getMemory();
+
+                    System.out.println("\n=== MEMORY INFORMATION ===");
+
+                    //  Memory stats - API = https://javadoc.io/static/com.github.oshi/oshi-core/5.6.1/oshi/hardware/GlobalMemory.html
+                    // WIP COME BACK TO THIS.
+                    long total = memory.getTotal();
+                    long available = memory.getAvailable();
+                    long used = total - available;
+
+                    double usedGB = used / (1024.0 * 1024 * 1024);
+                    double totalGB = total / (1024.0 * 1024 * 1024);
+                    double percentUsed = (used * 100.0) / total;
+
+                    System.out.printf("Total Memory: %.2f GB%n", totalGB);
+                    System.out.printf("Used Memory : %.2f GB (%.1f%%)%n", usedGB, percentUsed);
+                    System.out.printf("Free Memory : %.2f GB%n", available / (1024.0 * 1024 * 1024));
+
+
+                    // --- Swap memory ---
+                    VirtualMemory swap = memory.getVirtualMemory();
+                    double swapUsedGB = swap.getSwapUsed() / (1024.0 * 1024 * 1024);
+                    double swapTotalGB = swap.getSwapTotal() / (1024.0 * 1024 * 1024);
+                    if (swapTotalGB > 0) {
+                        double swapPercent = (swapUsedGB * 100) / swapTotalGB;
+                        System.out.printf("Swap Used: %.2f / %.2f GB (%.1f%%)%n", swapUsedGB, swapTotalGB, swapPercent);
+                    } else {
+                        System.out.println("Swap: Not available or disabled");
+                    }
+
+                    // RAM modules/info
+                    List<PhysicalMemory> ramModules = memory.getPhysicalMemory();
+
+                    if (!ramModules.isEmpty()) {
+                        System.out.println("\n=== Installed RAM Modules ===");
+                        for (PhysicalMemory ram : ramModules) {
+                            System.out.printf("%s: %.2f GB, %s, %d MHz%n",
+                                    ram.getManufacturer(),
+                                    ram.getCapacity() / (1024.0 * 1024 * 1024),        // convert bytes to GB
+                                    ram.getMemoryType(),                               // e.g. DDR4 / DDR5
+                                    ram.getClockSpeed() / 1_000_000);                  // convert Hz to MHz
+                        }
+                    }
+                    else
+                    {
+                        System.out.println("RAM module information unavailable.");
+                    }
+
+                    break;
+
+
+                case 7: // finally made an exit method
                     System.out.println("Exiting program...");
                     sc.close();
                     return;
