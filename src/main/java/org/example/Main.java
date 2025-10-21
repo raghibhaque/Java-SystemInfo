@@ -9,8 +9,6 @@ public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         SystemInfo si = new SystemInfo();
-        boolean isRunning = true;
-
         while (true) {
 
 
@@ -19,7 +17,8 @@ public class Main {
                     " \n 2. Display TCPv4 Stats. " +
                     "\n 3. Display CPU Info " +
                     "\n 4. Hardware Info" +
-                    "\n 5. USB Devices");
+                    "\n 5. USB Devices" +
+                    "\n 6. Exit");
             switch (sc.nextInt()) {
                 case 1:
                     ComputerSystem cs2 = si.getHardware().getComputerSystem();
@@ -37,14 +36,83 @@ public class Main {
                     break;
 
                 case 3:
+                    // Get access to CPU and sensor information aka temps,freqs , the lot
                     CentralProcessor processor = si.getHardware().getProcessor();
+                    Sensors sensors = si.getHardware().getSensors();
 
-                    System.out.println("Logical processor count: " + processor.getLogicalProcessorCount());
-                    System.out.println("Physical core count: " + processor.getPhysicalProcessorCount());
-                    System.out.println("Physical package count: " + processor.getPhysicalPackageCount());
-                    System.out.println("CPU utilization: " + Arrays.toString(processor.getSystemCpuLoadTicks()));
+                    System.out.println("\n=== CPU INFORMATION ===");
+
+                    // Basic CPU details
+                    System.out.println("Processor: " + processor.getProcessorIdentifier().getName());
+                    System.out.println("Architecture: " + processor.getProcessorIdentifier().getMicroarchitecture());
+                    System.out.println("Logical Cores: " + processor.getLogicalProcessorCount());
+                    System.out.println("Physical Cores: " + processor.getPhysicalProcessorCount());
+                    System.out.println("Packages: " + processor.getPhysicalPackageCount());
+                    System.out.println("CPU Voltage: " + sensors.getCpuVoltage() + " V");
+
+                    // --- CACHE INFORMATION ---
+                    System.out.println("\n=== Cache Hierarchy ===");
+                    try {
+                        List<CentralProcessor.ProcessorCache> caches = processor.getProcessorCaches();
+                        for (CentralProcessor.ProcessorCache cache : caches) {
+                            // Some OSHI versions use getCacheSize(), others use getSize()
+                            // we also use reflection here since the oshi version can differ i.e. we try both
+                            long size = 0; // storing cache here
+                            try {
+                                size = (long) cache.getClass().getMethod("getCacheSize").invoke(cache);
+                            } catch (Exception e) {
+                                try {
+                                    size = (long) cache.getClass().getMethod("getSize").invoke(cache);
+                                } catch (Exception ignored) {}
+                            }
+
+                            // Print cache level, type (e.g. DATA/INSTRUCTION/UNIFIED), and size in MB
+                            String readableSize = size > 0 ? String.format("%.2f MB", size / 1_000_000.0) : "Unavailable";
+                            System.out.printf("Level %d %s Cache: %s%n", cache.getLevel(), cache.getType(), readableSize);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Cache information not available for this OSHI version.");
+                    }
+
+                    //  TEMPERATURE
+                    double temp = sensors.getCpuTemperature();
+                    System.out.println("CPU Temperature: " + (temp > 0 ? temp + " °C" : "Unavailable"));
+
+                    //  FREQUENCY (current clock speed per core)
+                    long[] freqs = processor.getCurrentFreq();
+                    System.out.println("\n=== Core Frequencies (MHz) ===");
+                    for (int i = 0; i < freqs.length; i++) {
+                        System.out.printf("Core %d: %.2f MHz%n", i, freqs[i] / 1_000_000.0); // convert hz to MHz
+                    }
+
+                    // --- CPU UTILIZATION (Average and Per-Core) ---
+                    System.out.println("\nCollecting CPU usage snapshot...");
+                    long[] prevTicks = processor.getSystemCpuLoadTicks();
+                    try {
+                        Thread.sleep(1000);
+                    }
+                    catch (InterruptedException ignored) {
+
+                    }
+
+                    // Overall CPU load
+                    double avgLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100; // implementing because it makes it into a %, could leave it out if I wanted to
+                    System.out.printf("Average CPU Load: %.1f%%%n", avgLoad);
+
+                    // Per-core utilization (works in OSHI 5.x)
+                    long[][] prevCoreTicks = processor.getProcessorCpuLoadTicks();
+                    try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                    double[] perCore = processor.getProcessorCpuLoadBetweenTicks(prevCoreTicks);
+
+                    if (perCore != null) {
+                        System.out.println("\n=== Core Utilization ===");
+                        for (int i = 0; i < perCore.length; i++) {
+                            System.out.printf("Core %d: %.1f%%%n", i, perCore[i] * 100);
+                        }
+                    }
                     break;
-                case 4: // placeholder
+
+                case 4: // Firmware
 
                     ComputerSystem cs = si.getHardware().getComputerSystem();
                     Firmware firm = cs.getFirmware();
@@ -89,10 +157,13 @@ public class Main {
                         System.out.println("Product ID : " + device.getProductId());
                     }
                 break;
+                case 6: // finally made an exit method
+                    System.out.println("Exiting program...");
+                    sc.close();
+                    return;
                 default:
                     System.out.println("Invalid choice!");
             }
-            isRunning = !isRunning;
             sc.nextLine();
         }
     }
