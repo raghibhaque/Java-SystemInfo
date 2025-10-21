@@ -20,7 +20,8 @@ public class Main {
                     " \n 1. Display OS." +
                     " \n 2. Display TCPv4 Stats. " +
                     "\n 3. Display CPU Info " +
-                    "\n 4. Hardware Info");
+                    "\n 4. Hardware Info" +
+                    "\n 5. USB Devices");
             switch (sc.nextInt()) {
                 case 1:
                     System.out.println("OS: " + si.getOperatingSystem());
@@ -57,6 +58,12 @@ public class Main {
                     System.out.println("Model: " + base.getModel());
                     System.out.println("Version: " + base.getVersion());
                     System.out.println("Serial Number: " + base.getSerialNumber());
+                    break;
+                case 5:
+                    si.getHardware().getUsbDevices(true);
+                    System.out.println("USB Devices - History of Connected: " + si.getHardware().getUsbDevices(true));
+                    System.out.println("USB Devices - DIRECTLY CONNECTED: " + si.getHardware().getUsbDevices(false));
+                    System.out.println("Serial Number : " + si.getHardware().getComputerSystem().getSerialNumber());
                     break;
                 default:
                     System.out.println("Invalid choice!");
