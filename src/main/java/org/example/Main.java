@@ -27,7 +27,7 @@ public class Main {
                 System.out.println("Physical package count: " + processor.getPhysicalPackageCount());
                 System.out.println("CPU utilization: " + Arrays.toString(processor.getSystemCpuLoadTicks()));
                 break;
-            case 4:
+            case 4: // placeholder
                 System.out.println("placeholder");
             default:
                 System.out.println("Invalid choice!");
