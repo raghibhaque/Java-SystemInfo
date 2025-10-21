@@ -219,6 +219,12 @@ public class Main {
                 default:
                     System.out.println("Invalid choice!");
             }
+            try {
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+                System.out.println("Sleep interrupted!");
+            }
             sc.nextLine();
         }
     }
