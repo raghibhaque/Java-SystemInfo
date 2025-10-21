@@ -3,12 +3,13 @@ import oshi.SystemInfo; // sys info importing
 import oshi.hardware.CentralProcessor;
 import oshi.software.os.InternetProtocolStats;
 import java.util.*; // for scanner
+import oshi.hardware.Firmware;
 
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         SystemInfo si = new SystemInfo();
-        System.out.println("===MENU=== \n 1. Display OS. \n 2. Display TCPv4 Stats. \n 3. Display CPU Info");
+        System.out.println("===MENU=== \n 1. Display OS. \n 2. Display TCPv4 Stats. \n 3. Display CPU Info \n 4.PLCHD");
         switch (sc.nextInt()) {
             case 1:
                 System.out.println("OS: " + si.getOperatingSystem());
@@ -28,7 +29,9 @@ public class Main {
                 System.out.println("CPU utilization: " + Arrays.toString(processor.getSystemCpuLoadTicks()));
                 break;
             case 4: // placeholder
-                System.out.println("placeholder");
+                Firmware firm = si.getHardware().getFirmware();
+                System.out.println(firm.getFirmware());
+                break;
             default:
                 System.out.println("Invalid choice!");
         }
