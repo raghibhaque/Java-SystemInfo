@@ -29,8 +29,9 @@ public class Main {
                 System.out.println("CPU utilization: " + Arrays.toString(processor.getSystemCpuLoadTicks()));
                 break;
             case 4: // placeholder
-                Firmware firm = si.getHardware().getFirmware();
-                System.out.println(firm.getFirmware());
+                Firmware firm = si.getHardware().getComputerSystem().getFirmware();
+                System.out.println(firm);
+                System.out.println("Name" + firm.getName());
                 break;
             default:
                 System.out.println("Invalid choice!");
