@@ -51,22 +51,12 @@ public class Main {
                     System.out.println("CPU Voltage: " + sensors.getCpuVoltage() + " V");
 
                     System.out.println("\n=== Cache Hierarchy ===");
-                    try {
-                        List<CentralProcessor.ProcessorCache> caches = processor.getProcessorCaches();
-                        for (CentralProcessor.ProcessorCache cache : caches) {
-                            long size = 0;
-                            try {
-                                size = (long) cache.getClass().getMethod("getCacheSize").invoke(cache);
-                            } catch (Exception e) {
-                                try {
-                                    size = (long) cache.getClass().getMethod("getSize").invoke(cache);
-                                } catch (Exception ignored) {}
-                            }
-                            String readableSize = size > 0 ? String.format("%.2f MB", size / 1_000_000.0) : "Unavailable";
-                            System.out.printf("Level %d %s Cache: %s%n", cache.getLevel(), cache.getType(), readableSize);
-                        }
-                    } catch (Exception e) {
-                        System.out.println("Cache information not available for this OSHI version.");
+                    List<CentralProcessor.ProcessorCache> caches = processor.getProcessorCaches(); // Gets a list of all cache levels
+                    for (CentralProcessor.ProcessorCache cache : caches) // Loops through each cache found in the CPU.
+                    {
+                        long size = cache.getCacheSize();
+                        String cacheSize = size > 0 ? String.format("%.2f MB", size / 1_000_000.0) : "Unavailable"; // div by 1,000,000 - base 10
+                        System.out.printf("Level %d %s Cache: %s%n", cache.getLevel(), cache.getType(), cacheSize);
                     }
 
                     double temp = sensors.getCpuTemperature();
@@ -80,7 +70,9 @@ public class Main {
 
                     System.out.println("\nCollecting CPU usage snapshot...");
                     long[] prevTicks = processor.getSystemCpuLoadTicks();
-                    try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                    try {
+                        Thread.sleep(1000); } catch (InterruptedException ignored) {
+                    }
                     double avgLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
                     System.out.printf("Average CPU Load: %.1f%%%n", avgLoad);
 
@@ -182,7 +174,7 @@ public class Main {
                     break;
 
                 // --- DISK INFO ---
-                case 7:
+                case 7: // done by matt
                     List<HWDiskStore> diskInfo = si.getHardware().getDiskStores();//hard drive section start
 
                     for (int i=0;i< diskInfo.size();i++) {
