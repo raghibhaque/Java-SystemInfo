@@ -1,28 +1,26 @@
 package org.example;
-import oshi.SystemInfo; // sys info importing
+import oshi.SystemInfo;
 import oshi.hardware.*;
 import oshi.software.os.InternetProtocolStats;
 import oshi.software.os.OperatingSystem;
-
-import java.util.*; // for scanner
-
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         SystemInfo si = new SystemInfo();
+
         while (true) {
-
-
             System.out.println("===MENU===" +
-                    " \n 1. Display SYSTEM INFO." +
-                    " \n 2. Display TCPv4 Stats. " +
-                    "\n 3. Display CPU Info " +
+                    "\n 1. Display SYSTEM INFO." +
+                    "\n 2. Display TCPv4 Stats." +
+                    "\n 3. Display CPU Info" +
                     "\n 4. Hardware Info" +
                     "\n 5. USB Devices" +
                     "\n 6. Memory Info" +
                     "\n 7. Disk Info" +
-                    "\n 8. Exit");
+                    "\n 8. PCI Info" +
+                    "\n 9. Exit");
 
             switch (sc.nextInt()) {
                 case 1:
@@ -41,13 +39,9 @@ public class Main {
                     break;
 
                 case 3:
-                    // Get access to CPU and sensor information aka temps,freqs , the lot
                     CentralProcessor processor = si.getHardware().getProcessor();
                     Sensors sensors = si.getHardware().getSensors();
-
                     System.out.println("\n=== CPU INFORMATION ===");
-
-                    // Basic CPU details
                     System.out.println("Processor: " + processor.getProcessorIdentifier().getName());
                     System.out.println("Architecture: " + processor.getProcessorIdentifier().getMicroarchitecture());
                     System.out.println("Logical Cores: " + processor.getLogicalProcessorCount());
@@ -55,14 +49,11 @@ public class Main {
                     System.out.println("Packages: " + processor.getPhysicalPackageCount());
                     System.out.println("CPU Voltage: " + sensors.getCpuVoltage() + " V");
 
-                    // --- CACHE INFORMATION ---
                     System.out.println("\n=== Cache Hierarchy ===");
                     try {
                         List<CentralProcessor.ProcessorCache> caches = processor.getProcessorCaches();
                         for (CentralProcessor.ProcessorCache cache : caches) {
-                            // Some OSHI versions use getCacheSize(), others use getSize()
-                            // we also use reflection here since the oshi version can differ i.e. we try both
-                            long size = 0; // storing cache here
+                            long size = 0;
                             try {
                                 size = (long) cache.getClass().getMethod("getCacheSize").invoke(cache);
                             } catch (Exception e) {
@@ -70,8 +61,6 @@ public class Main {
                                     size = (long) cache.getClass().getMethod("getSize").invoke(cache);
                                 } catch (Exception ignored) {}
                             }
-
-                            // Print cache level, type (e.g. DATA/INSTRUCTION/UNIFIED), and size in MB
                             String readableSize = size > 0 ? String.format("%.2f MB", size / 1_000_000.0) : "Unavailable";
                             System.out.printf("Level %d %s Cache: %s%n", cache.getLevel(), cache.getType(), readableSize);
                         }
@@ -79,32 +68,21 @@ public class Main {
                         System.out.println("Cache information not available for this OSHI version.");
                     }
 
-                    //  TEMPERATURE
                     double temp = sensors.getCpuTemperature();
                     System.out.println("CPU Temperature: " + (temp > 0 ? temp + " °C" : "Unavailable"));
 
-                    //  FREQUENCY (current clock speed per core)
                     long[] freqs = processor.getCurrentFreq();
                     System.out.println("\n=== Core Frequencies (MHz) ===");
                     for (int i = 0; i < freqs.length; i++) {
-                        System.out.printf("Core %d: %.2f MHz%n", i, freqs[i] / 1_000_000.0); // convert hz to MHz
+                        System.out.printf("Core %d: %.2f MHz%n", i, freqs[i] / 1_000_000.0);
                     }
 
-                    // --- CPU UTILIZATION (Average and Per-Core) ---
                     System.out.println("\nCollecting CPU usage snapshot...");
                     long[] prevTicks = processor.getSystemCpuLoadTicks();
-                    try {
-                        Thread.sleep(1000);
-                    }
-                    catch (InterruptedException ignored) {
-
-                    }
-
-                    // Overall CPU load
-                    double avgLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100; // implementing because it makes it into a %, could leave it out if I wanted to
+                    try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                    double avgLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
                     System.out.printf("Average CPU Load: %.1f%%%n", avgLoad);
 
-                    // Per-core utilization (works in OSHI 5.x)
                     long[][] prevCoreTicks = processor.getProcessorCpuLoadTicks();
                     try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
                     double[] perCore = processor.getProcessorCpuLoadBetweenTicks(prevCoreTicks);
@@ -117,8 +95,7 @@ public class Main {
                     }
                     break;
 
-                case 4: // Firmware
-
+                case 4:
                     ComputerSystem cs = si.getHardware().getComputerSystem();
                     Firmware firm = cs.getFirmware();
                     Baseboard base = cs.getBaseboard();
@@ -138,8 +115,6 @@ public class Main {
 
                 case 5:
                     System.out.println("=== USB DEVICE INFORMATION ===");
-
-                    // Gets full history of usb's ever connected since Boolean b is true
                     List<UsbDevice> usbDevices = si.getHardware().getUsbDevices(true);
                     System.out.println("USB Devices - Hierarchical (All Connected):");
                     for (UsbDevice device : usbDevices) {
@@ -151,29 +126,23 @@ public class Main {
                         System.out.println("Serial Num : " + device.getSerialNumber());
                     }
 
-                    // get only CURRENT connections
                     System.out.println("\nUSB Devices - Directly Connected:");
                     List<UsbDevice> topDevices = si.getHardware().getUsbDevices(false);
-                    for (UsbDevice device : topDevices) { // for every device in the list we print its own details
+                    for (UsbDevice device : topDevices) {
                         System.out.println("-------------------------------------------------");
                         System.out.println("Name : " + device.getName());
                         System.out.println("Vendor : " + device.getVendor());
                         System.out.println("Vendor ID : " + device.getVendorId());
                         System.out.println("Product ID : " + device.getProductId());
                     }
-                break;
+                    break;
 
                 case 6:
                     GlobalMemory memory = si.getHardware().getMemory();
-
                     System.out.println("\n=== MEMORY INFORMATION ===");
-
-                    //  Memory stats - API = https://javadoc.io/static/com.github.oshi/oshi-core/5.6.1/oshi/hardware/GlobalMemory.html
-                    // WIP COME BACK TO THIS.
                     long total = memory.getTotal();
                     long available = memory.getAvailable();
                     long used = total - available;
-
                     double usedGB = used / (1024.0 * 1024 * 1024);
                     double totalGB = total / (1024.0 * 1024 * 1024);
                     double percentUsed = (used * 100.0) / total;
@@ -182,8 +151,6 @@ public class Main {
                     System.out.printf("Used Memory : %.2f GB (%.1f%%)%n", usedGB, percentUsed);
                     System.out.printf("Free Memory : %.2f GB%n", available / (1024.0 * 1024 * 1024));
 
-
-                    // --- Swap memory ---
                     VirtualMemory swap = memory.getVirtualMemory();
                     double swapUsedGB = swap.getSwapUsed() / (1024.0 * 1024 * 1024);
                     double swapTotalGB = swap.getSwapTotal() / (1024.0 * 1024 * 1024);
@@ -194,29 +161,26 @@ public class Main {
                         System.out.println("Swap: Not available or disabled");
                     }
 
-                    // RAM modules/info
                     List<PhysicalMemory> ramModules = memory.getPhysicalMemory();
-
                     if (!ramModules.isEmpty()) {
                         System.out.println("\n=== Installed RAM Modules ===");
                         for (PhysicalMemory ram : ramModules) {
                             System.out.printf("%s: %.2f GB, %s, %d MHz%n",
                                     ram.getManufacturer(),
-                                    ram.getCapacity() / (1024.0 * 1024 * 1024),        // convert bytes to GB
-                                    ram.getMemoryType(),                               // e.g. DDR4 / DDR5
-                                    ram.getClockSpeed() / 1_000_000);                  // convert Hz to MHz
+                                    ram.getCapacity() / (1024.0 * 1024 * 1024),
+                                    ram.getMemoryType(),
+                                    ram.getClockSpeed() / 1_000_000);
                         }
-                    }
-                    else
-                    {
+                    } else {
                         System.out.println("RAM module information unavailable.");
                     }
-                    int barlength = 30;
-                    int barfilled = (int) (barlength * percentUsed / 100);
-                    String bar = "[" + "#".repeat(barfilled) + "-".repeat(barlength - barfilled) + "]";
+                    int barLength = 30;
+                    int barFilled = (int) (barLength * percentUsed / 100);
+                    String bar = "[" + "#".repeat(barFilled) + "-".repeat(barLength - barFilled) + "]";
                     System.out.println("Usage: " + bar + " " + String.format("%.1f%%", percentUsed));
                     break;
 
+                // --- DISK INFO ---
                 case 7:
                     List<HWDiskStore> diskInfo = si.getHardware().getDiskStores();//hard drive section start
 
@@ -280,17 +244,54 @@ public class Main {
                         System.out.println(diskPercent + "% of the disk's space is in use");
 
                     }
-                        break;
-                case 8: // finally made an exit method
+                    break;
+
+                // --- PCI INFO ---
+                case 8: // By Jerry H.
+                    System.out.println("===PCI Info===" +
+                            "\n 1. Graphics Card Info" +
+                            "\n 2. Network Interfaces" +
+                            "\n 3. Disk Stats");
+                    int choice = sc.nextInt();
+
+                    if (choice == 1) {
+                        List<GraphicsCard> gpus = si.getHardware().getGraphicsCards();
+                        for (GraphicsCard gpu : gpus) {
+                            System.out.println("GPU: " + gpu.getName());
+                            System.out.println("Vendor: " + gpu.getVendor());
+                            System.out.println("Device ID: " + gpu.getDeviceId());
+                        }
+                    } else if (choice == 2) {
+                        List<NetworkIF> networks = si.getHardware().getNetworkIFs();
+                        for (NetworkIF net : networks) {
+                            System.out.println("Name: " + net.getName());
+                            System.out.println("Display name: " + net.getDisplayName());
+                            System.out.println("MAC: " + net.getMacaddr());
+                            System.out.println("IPv4: " + Arrays.toString(net.getIPv4addr()));
+                            System.out.println("Speed: " + net.getSpeed() / 1_000_000 + " Mbps");
+                        }
+                    } else if (choice == 3) {
+                        for (HWDiskStore disk : si.getHardware().getDiskStores()) {
+                            System.out.println("Disk: " + disk.getModel());
+                            System.out.println("Serial: " + disk.getSerial());
+                            System.out.println("Reads: " + disk.getReads());
+                            System.out.println("Writes: " + disk.getWrites());
+                        }
+                    } else {
+                        System.out.println("Invalid PCI option!");
+                    }
+                    break;
+
+                case 9:
                     System.out.println("Exiting program...");
                     sc.close();
                     return;
+
                 default:
                     System.out.println("Invalid choice!");
             }
-            try {
-                Thread.sleep(1000);
-            }
+
+            try { Thread.sleep(1000); }
             catch (InterruptedException e) {
                 System.out.println("Sleep interrupted!");
             }
