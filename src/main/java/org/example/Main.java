@@ -2,6 +2,8 @@ package org.example;
 import oshi.SystemInfo; // sys info importing
 import oshi.hardware.*;
 import oshi.software.os.InternetProtocolStats;
+import oshi.software.os.OperatingSystem;
+
 import java.util.*; // for scanner
 
 
@@ -19,7 +21,8 @@ public class Main {
                     "\n 4. Hardware Info" +
                     "\n 5. USB Devices" +
                     "\n 6. Memory Info" +
-                    "\n 7. Exit");
+                    "\n 7. Disk Info" +
+                    "\n 8. Exit");
 
             switch (sc.nextInt()) {
                 case 1:
@@ -214,8 +217,71 @@ public class Main {
                     System.out.println("Usage: " + bar + " " + String.format("%.1f%%", percentUsed));
                     break;
 
+                case 7:
+                    List<HWDiskStore> diskInfo = si.getHardware().getDiskStores();//hard drive section start
 
-                case 7: // finally made an exit method
+                    for (int i=0;i< diskInfo.size();i++) {
+                        diskInfo.get(i).updateAttributes();
+                        System.out.println("Displaying disk "+i +"'s information");//disk name as number
+                        double diskSize = diskInfo.get(i).getSize();
+
+                        //section to get the file type
+                        OperatingSystem os=si.getOperatingSystem();
+                        System.out.println("it uses the "+os.getFileSystem().getFileStores().get(0).getType()+" file system");
+
+
+                        //section for total size
+                        if (diskSize >= 1000000 && diskSize < 1000000000) {//makes MB if best
+                            int diskSizeUnit = (int) (diskSize / 1000000);
+                            System.out.println("Disk has " + diskSizeUnit + "MB total");
+                        }
+                        if (diskSize >= 1000000000) {//makes GB if best
+                            int diskSizeUnit = (int) (diskSize / 1000000000);
+                            System.out.println("Disk has " + diskSizeUnit + "GB total");
+                        }
+                        if (diskSize < 1000000) {//makes Bytes if nothing else applies
+                            int diskSizeUnit = (int) diskSize;
+                            System.out.println("Disk has " + diskSizeUnit + "Bytes total");
+                        }
+
+                        // section to get amt disk used
+                        double diskUsed = diskInfo.get(i).getWriteBytes();
+                        if (diskUsed >= 1000000 && diskUsed < 1000000000) {//makes MB if best
+                            int diskUsedUnit = (int) (diskUsed / 1000000);
+                            System.out.println("Disk has " + diskUsedUnit + "MB in use");
+                        }
+                        if (diskSize >= 1000000000) {//makes GB if best
+                            int diskUsedUnit = (int) (diskUsed / 1000000000);
+                            System.out.println("Disk has " + diskUsedUnit + "GB in use");
+                        }
+                        if (diskSize < 1000000) {//makes Bytes if nothing else applies
+                            int diskUsedUnit = (int) diskUsed;
+                            System.out.println("Disk has " + diskUsedUnit + "Bytes in use");
+                        }
+
+                        //section to get amount of disk free
+                        double diskRemaining = diskSize - diskUsed;
+                        if (diskRemaining >= 1000000 && diskRemaining < 1000000000) {//makes MB if best
+                            int diskRemainingUnit = (int) (diskRemaining / 1000000);
+                            System.out.println("Disk has " + diskRemainingUnit + "MB free");
+                        }
+                        if (diskSize >= 1000000000) {//makes GB if best
+                            int diskRemainingUnit = (int) (diskRemaining / 1000000000);
+                            System.out.println("Disk has " + diskRemainingUnit + "GB free");
+                        }
+                        if (diskSize < 1000000) {//makes Bytes if nothing else applies
+                            int diskRemainingUnit = (int) diskRemaining;
+                            System.out.println("Disk has " + diskRemainingUnit + "Bytes free");
+                        }
+
+                        //amount of disk free as %
+                        double diskPercentInt = (int) ((diskUsed / diskSize) * 10000);
+                        double diskPercent = diskPercentInt / 100;
+                        System.out.println(diskPercent + "% of the disk's space is in use");
+
+                    }
+                        break;
+                case 8: // finally made an exit method
                     System.out.println("Exiting program...");
                     sc.close();
                     return;
