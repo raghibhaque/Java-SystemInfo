@@ -1,9 +1,9 @@
 package org.example;
-import oshi.SystemInfo;
+import oshi.SystemInfo; // for sys info
 import oshi.hardware.*;
 import oshi.software.os.InternetProtocolStats;
 import oshi.software.os.OperatingSystem;
-import java.util.*;
+import java.util.*; // for scanner
 
 public class Main {
     public static void main(String[] args) {
@@ -38,10 +38,11 @@ public class Main {
                     System.out.println("TCPv4 Stats: " + ipStats.getTCPv4Stats());
                     break;
 
-                case 3:
+                case 3: // Get access to CPU and sensor information aka temps,freqs , the lot
                     CentralProcessor processor = si.getHardware().getProcessor();
                     Sensors sensors = si.getHardware().getSensors();
-                    System.out.println("\n=== CPU INFORMATION ===");
+                    System.out.println("\n=== CPU INFORMATION ===");// Basic CPU details
+
                     System.out.println("Processor: " + processor.getProcessorIdentifier().getName());
                     System.out.println("Architecture: " + processor.getProcessorIdentifier().getMicroarchitecture());
                     System.out.println("Logical Cores: " + processor.getLogicalProcessorCount());
@@ -128,7 +129,7 @@ public class Main {
 
                     System.out.println("\nUSB Devices - Directly Connected:");
                     List<UsbDevice> topDevices = si.getHardware().getUsbDevices(false);
-                    for (UsbDevice device : topDevices) {
+                    for (UsbDevice device : topDevices) { // for every device in the list we print its own details
                         System.out.println("-------------------------------------------------");
                         System.out.println("Name : " + device.getName());
                         System.out.println("Vendor : " + device.getVendor());
@@ -137,7 +138,7 @@ public class Main {
                     }
                     break;
 
-                case 6:
+                case 6:  //  Memory stats - API = https://javadoc.io/static/com.github.oshi/oshi-core/5.6.1/oshi/hardware/GlobalMemory.html
                     GlobalMemory memory = si.getHardware().getMemory();
                     System.out.println("\n=== MEMORY INFORMATION ===");
                     long total = memory.getTotal();
@@ -150,7 +151,7 @@ public class Main {
                     System.out.printf("Total Memory: %.2f GB%n", totalGB);
                     System.out.printf("Used Memory : %.2f GB (%.1f%%)%n", usedGB, percentUsed);
                     System.out.printf("Free Memory : %.2f GB%n", available / (1024.0 * 1024 * 1024));
-
+                    //  Swap memory
                     VirtualMemory swap = memory.getVirtualMemory();
                     double swapUsedGB = swap.getSwapUsed() / (1024.0 * 1024 * 1024);
                     double swapTotalGB = swap.getSwapTotal() / (1024.0 * 1024 * 1024);
@@ -167,9 +168,9 @@ public class Main {
                         for (PhysicalMemory ram : ramModules) {
                             System.out.printf("%s: %.2f GB, %s, %d MHz%n",
                                     ram.getManufacturer(),
-                                    ram.getCapacity() / (1024.0 * 1024 * 1024),
+                                    ram.getCapacity() / (1024.0 * 1024 * 1024), // convert bytes to GB
                                     ram.getMemoryType(),
-                                    ram.getClockSpeed() / 1_000_000);
+                                    ram.getClockSpeed() / 1_000_000);// convert Hz to MHz
                         }
                     } else {
                         System.out.println("RAM module information unavailable.");
@@ -291,7 +292,9 @@ public class Main {
                     System.out.println("Invalid choice!");
             }
 
-            try { Thread.sleep(1000); }
+            try {
+                Thread.sleep(1000);
+            }
             catch (InterruptedException e) {
                 System.out.println("Sleep interrupted!");
             }
