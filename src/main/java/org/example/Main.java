@@ -236,6 +236,37 @@ public class Main {
                         double diskPercent = diskPercentInt / 100;
                         System.out.println(diskPercent + "% of the disk's space is in use");
 
+
+                        //Section for Read and write speeds
+                        HWDiskStore disk=diskInfo.get(0);
+                        disk.updateAttributes();
+                        //get initial values
+                        long transTime1 = disk.getTransferTime();
+                        long reads1=disk.getReads();
+                        long writes1=disk.getWrites();
+                        //wait
+                        System.out.print("please wait while disk usage is calculated");
+                        try {
+                            Thread.sleep(5000);
+                        }
+                        catch (InterruptedException ignored) {
+
+                        }
+                        System.out.println(".......done");
+                        disk.updateAttributes();//update values
+
+                        //get new values
+                        long transTime2 = disk.getTransferTime();
+                        long reads2=disk.getReads();
+                        long writes2=disk.getWrites();
+                        //get reads/writes in time elapsed
+                        double transTimeTotal=transTime2 - transTime1;
+                        double readsTotal=reads2 - reads1;
+                        double writesTotal=writes2 - writes1;
+
+                        double writePercent=(long)((transTimeTotal/5000)*10000);
+                        System.out.println("This drive is currently in use an average of "+writePercent/100+"% of the time");
+                        System.out.println("This drive is currently conducting an average of "+(int) ((((readsTotal+writesTotal)/transTimeTotal)/5)*1000)+" reads/writes per minute");
                     }
                     break;
 
