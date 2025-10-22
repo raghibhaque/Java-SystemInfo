@@ -208,7 +208,10 @@ public class Main {
                     {
                         System.out.println("RAM module information unavailable.");
                     }
-
+                    int barlength = 30;
+                    int barfilled = (int) (barlength * percentUsed / 100);
+                    String bar = "[" + "#".repeat(barfilled) + "-".repeat(barlength - barfilled) + "]";
+                    System.out.println("Usage: " + bar + " " + String.format("%.1f%%", percentUsed));
                     break;
 
 
