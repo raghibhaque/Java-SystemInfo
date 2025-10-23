@@ -4,8 +4,9 @@ import oshi.hardware.*;
 import oshi.software.os.InternetProtocolStats;
 import oshi.software.os.OperatingSystem;
 import java.util.*; // for scanner
-import java.net.InetAddress;//for network
+import java.net.InetAddress; //for network
 import oshi.hardware.NetworkIF;
+import oshi.jna.platform.windows.PowrProf;
 
 
 public class Main {
@@ -24,7 +25,8 @@ public class Main {
                     "\n 7. Disk Info" +
                     "\n 8. PCI Info" +
                     "\n 9. Network Info" +
-                    "\n 10. Exit");
+                    "\n 10. Battery Info" +
+                    "\n 11. Exit");
 
             switch (sc.nextInt()) {
                 case 1:
@@ -39,7 +41,11 @@ public class Main {
 
                 case 2:
                     InternetProtocolStats ipStats = si.getOperatingSystem().getInternetProtocolStats();
-                    System.out.println("TCPv4 Stats: " + ipStats.getTCPv4Stats());
+                    System.out.println("=== TCPv4 & UDP Statistics ===");
+                    System.out.println("TCPv4 Stats: " + ipStats.getTCPv4Stats()); // connection oriented
+                    System.out.println("TCPv6 Stats: " + ipStats.getTCPv6Stats());
+                    System.out.println("UDPv4 Stats: " + ipStats.getUDPv4Stats());
+                    System.out.println("UDPv6 Stats: " + ipStats.getUDPv6Stats());
                     break;
 
                 case 3: // Get access to CPU and sensor information aka temps,freqs , the lot
@@ -83,7 +89,7 @@ public class Main {
                     }
                     double avgLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
                     System.out.printf("Average CPU Load: %.1f%%%n", avgLoad);
-                    //Lizaa
+                    //Liza
                     String status = avgLoad > 80 ? "High Load" : "Normal";
                     System.out.println("CPU Health: " + status);
                     //
@@ -113,11 +119,8 @@ public class Main {
                                 }
                             }
                         }
-
-                        //
                     }
                     break;
-
                 case 4:
                     ComputerSystem cs = si.getHardware().getComputerSystem();
                     Firmware firm = cs.getFirmware();
@@ -395,8 +398,37 @@ public class Main {
 
 
                     break;
-                //
-                case 10:
+                // Raghib - battery info
+                case 10: // https://www.oshi.ooo/oshi-core/apidocs/oshi/hardware/PowerSource.html
+                    List<PowerSource> batteries = si.getHardware().getPowerSources();
+                    System.out.println("=== Battery Info ===");
+
+                    if (batteries.isEmpty()) {
+                        System.out.println("No battery detected.");
+                    }
+                    else {
+                        for (PowerSource bat : batteries)
+                        {
+                            System.out.printf("Name: %s%n", bat.getName());
+                            System.out.printf("Charging: %s%n", bat.isCharging() ? "Yes" : "No");
+                            System.out.println("Battery Temperature : " + bat.getTemperature());
+                            System.out.println("Battery Voltage : " + bat.getVoltage());
+                            System.out.println("Battery Manufacter : " + bat.getManufacturer());
+
+                            double timeRemaining = bat.getTimeRemainingEstimated();
+                            if (timeRemaining >= 0)
+                            {
+                                System.out.printf("Time Remaining: %.1f minutes%n", timeRemaining / 60.0);
+                            }
+                            else
+                            {
+                                System.out.println("Time Remaining: Unknown");
+                            }
+                            System.out.println();
+                        }
+                    }
+                    break;
+                case 11:
                     System.out.println("Exiting program...");
                     sc.close();
                     return;
