@@ -4,6 +4,9 @@ import oshi.hardware.*;
 import oshi.software.os.InternetProtocolStats;
 import oshi.software.os.OperatingSystem;
 import java.util.*; // for scanner
+import java.net.InetAddress;//for network
+import oshi.hardware.NetworkIF;
+
 
 public class Main {
     public static void main(String[] args) {
@@ -20,7 +23,8 @@ public class Main {
                     "\n 6. Memory Info" +
                     "\n 7. Disk Info" +
                     "\n 8. PCI Info" +
-                    "\n 9. Exit");
+                    "\n 9. Network Info" +
+                    "\n 10. Exit");
 
             switch (sc.nextInt()) {
                 case 1:
@@ -49,6 +53,10 @@ public class Main {
                     System.out.println("Physical Cores: " + processor.getPhysicalProcessorCount());
                     System.out.println("Packages: " + processor.getPhysicalPackageCount());
                     System.out.println("CPU Voltage: " + sensors.getCpuVoltage() + " V");
+                    //Liza
+                    System.out.println("CPU Logical Thread Count: " + processor.getLogicalProcessorCount());
+                    System.out.println("System Uptime: " + si.getOperatingSystem().getSystemUptime() / 60 + " minutes");
+                    //
 
                     System.out.println("\n=== Cache Hierarchy ===");
                     List<CentralProcessor.ProcessorCache> caches = processor.getProcessorCaches(); // Gets a list of all cache levels
@@ -75,6 +83,10 @@ public class Main {
                     }
                     double avgLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
                     System.out.printf("Average CPU Load: %.1f%%%n", avgLoad);
+                    //Lizaa
+                    String status = avgLoad > 80 ? "High Load" : "Normal";
+                    System.out.println("CPU Health: " + status);
+                    //
 
                     long[][] prevCoreTicks = processor.getProcessorCpuLoadTicks();
                     try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
@@ -82,9 +94,27 @@ public class Main {
 
                     if (perCore != null) {
                         System.out.println("\n=== Core Utilization ===");
+                        //Liza
+                        double[] coreLoads = new double[perCore.length];
                         for (int i = 0; i < perCore.length; i++) {
-                            System.out.printf("Core %d: %.1f%%%n", i, perCore[i] * 100);
+                            coreLoads[i] = perCore[i] * 100;
+                            System.out.printf("Core %d: %.1f%%%n", i + 1, coreLoads[i]);
                         }
+                        double[] sortedLoads = Arrays.copyOf(coreLoads, coreLoads.length);
+                        Arrays.sort(sortedLoads);
+                        boolean[] printed = new boolean[coreLoads.length];
+                        System.out.println("\n=== Most Active Cores ===");
+                        for (int i = sortedLoads.length - 1; i >= 0; i--) {
+                            for (int j = 0; j < coreLoads.length; j++) {
+                                if (!printed[j] && sortedLoads[i] == coreLoads[j]) {
+                                    System.out.printf("Core %d: %.1f%%%n", j +1, sortedLoads[i]);
+                                    printed[j] = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        //
                     }
                     break;
 
@@ -139,10 +169,14 @@ public class Main {
                     double usedGB = used / (1024.0 * 1024 * 1024);
                     double totalGB = total / (1024.0 * 1024 * 1024);
                     double percentUsed = (used * 100.0) / total;
+                    //Liza
+                    double memEff = (available / (double) total) * 100;
 
                     System.out.printf("Total Memory: %.2f GB%n", totalGB);
                     System.out.printf("Used Memory : %.2f GB (%.1f%%)%n", usedGB, percentUsed);
                     System.out.printf("Free Memory : %.2f GB%n", available / (1024.0 * 1024 * 1024));
+                    System.out.printf("Memory Efficiency: %.2f%% free%n", memEff);
+                    //
                     //  Swap memory
                     VirtualMemory swap = memory.getVirtualMemory();
                     double swapUsedGB = swap.getSwapUsed() / (1024.0 * 1024 * 1024);
@@ -265,8 +299,12 @@ public class Main {
                         double writesTotal=writes2 - writes1;
 
                         double writePercent=(long)((transTimeTotal/5000)*10000);
+                        //Liza
+                        double readSpeedMB = (readsTotal) / 1024.0 / 1024 / 5; // per second
                         System.out.println("This drive is currently in use an average of "+writePercent/100+"% of the time");
                         System.out.println("This drive is currently conducting an average of "+(int) ((((readsTotal+writesTotal)/transTimeTotal)/5)*1000)+" reads/writes per minute");
+                        System.out.printf("Read Speed: %.2f MB/s%n", readSpeedMB);
+                        //
                     }
                     break;
 
@@ -306,7 +344,50 @@ public class Main {
                     }
                     break;
 
+                //Liza
                 case 9:
+                    for (NetworkIF net : si.getHardware().getNetworkIFs()) {
+                        net.updateAttributes();
+                        long sentStart = net.getBytesSent();
+                        long recvStart = net.getBytesRecv();
+                        long startTime = System.currentTimeMillis();
+
+                        try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+
+                        net.updateAttributes();
+                        long sentEnd = net.getBytesSent();
+                        long recvEnd = net.getBytesRecv();
+                        long elapsedMs = System.currentTimeMillis() - startTime; // actual time passed
+
+                        double uploadKBs = (sentEnd - sentStart) / 1024.0 / (elapsedMs / 1000.0);
+                        double downloadKBs = (recvEnd - recvStart) / 1024.0 / (elapsedMs / 1000.0);
+
+                        System.out.printf("%s - Upload: %.2f KB/s, Download: %.2f KB/s%n",
+                                net.getName(), uploadKBs, downloadKBs);
+
+                        double uploadPercent = ((sentEnd - sentStart) * 8.0) / net.getSpeed() * 100;
+                        double downloadPercent = ((recvEnd - recvStart) * 8.0) / net.getSpeed() * 100;
+
+                        System.out.printf("Upload usage: %.2f%%, Download usage: %.2f%%%n", uploadPercent, downloadPercent);
+                    }
+
+
+
+//                    for (NetworkIF net : si.getHardware().getNetworkIFs()) {
+//                        System.out.println("Name: " + net.getName());
+//                        System.out.println("MAC: " + net.getMacaddr());
+//                        System.out.println("IPv4: " + Arrays.toString(net.getIPv4addr()));
+//                        System.out.println("IPv6: " + Arrays.toString(net.getIPv6addr()));
+//                        System.out.println("Interface speed: " + net.getSpeed() / 1_000_000 + " Mbps");
+//                        System.out.println("Physical medium: " + net.getNdisPhysicalMediumType());
+//                        System.out.println("Connector present: " + net.isConnectorPresent());
+//                        System.out.println("Alias: " + net.getIfAlias());
+//                    }
+
+
+                    break;
+                //
+                case 10:
                     System.out.println("Exiting program...");
                     sc.close();
                     return;
