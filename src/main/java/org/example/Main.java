@@ -432,7 +432,6 @@ public class Main {
                     System.out.println("Exiting program...");
                     sc.close();
                     return;
-
                 default:
                     System.out.println("Invalid choice!");
             }
