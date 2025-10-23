@@ -152,7 +152,7 @@ public class Main {
                     System.out.println("\nUSB Devices - Directly Connected:");
                     List<UsbDevice> topDevices = si.getHardware().getUsbDevices(false);
                     for (UsbDevice device : topDevices) { // for every device in the list we print its own details
-                        System.out.println("-------------------------------------------------");
+                        System.out.println("=====");
                         System.out.println("Name : " + device.getName());
                         System.out.println("Vendor : " + device.getVendor());
                         System.out.println("Vendor ID : " + device.getVendorId());
@@ -213,7 +213,7 @@ public class Main {
 
                     for (int i=0;i< diskInfo.size();i++) {
                         diskInfo.get(i).updateAttributes();
-                        System.out.println("Displaying disk "+i +"'s information");//disk name as number
+                        System.out.println("\nDisplaying disk "+i +"'s information");//disk name as number
                         double diskSize = diskInfo.get(i).getSize();
 
                         //section to get the file type
