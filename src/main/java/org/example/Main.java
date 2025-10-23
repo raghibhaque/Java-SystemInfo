@@ -277,7 +277,9 @@ public class Main {
                         //get initial values
                         long transTime1 = disk.getTransferTime();
                         long reads1=disk.getReads();
+                        long readsMB1=disk.getReadBytes();
                         long writes1=disk.getWrites();
+                        long writesMB1=disk.getWriteBytes();
                         //wait
                         System.out.print("please wait while disk usage is calculated");
                         try {
@@ -292,18 +294,25 @@ public class Main {
                         //get new values
                         long transTime2 = disk.getTransferTime();
                         long reads2=disk.getReads();
+                        long readsMB2=disk.getReadBytes();
                         long writes2=disk.getWrites();
+                        long writesMB2=disk.getWriteBytes();
+
                         //get reads/writes in time elapsed
                         double transTimeTotal=transTime2 - transTime1;
                         double readsTotal=reads2 - reads1;
+                        long readsMBTotal=readsMB2 - readsMB1;
                         double writesTotal=writes2 - writes1;
+                        double writesMBTotal=writesMB2 - writesMB1;
 
                         double writePercent=(long)((transTimeTotal/5000)*10000);
                         //Liza
-                        double readSpeedMB = (readsTotal) / 1024.0 / 1024 / 5; // per second
+                        double readSpeedMB = (readsMBTotal) / 1024.0 / 1024 / 5; // per second
+                        double writeSpeedMB = (writesMBTotal) / 1024.0 / 1024 / 5; // per second
                         System.out.println("This drive is currently in use an average of "+writePercent/100+"% of the time");
-                        System.out.println("This drive is currently conducting an average of "+(int) ((((readsTotal+writesTotal)/transTimeTotal)/5)*1000)+" reads/writes per minute");
+                        System.out.println("This drive is currently conducting an average of "+(int) ((((readsTotal+writesTotal)/transTimeTotal)/5)*1000)+" reads/writes per second");
                         System.out.printf("Read Speed: %.2f MB/s%n", readSpeedMB);
+                        System.out.printf("Read Speed: %.2f MB/s%n", writeSpeedMB);
                         //
                     }
                     break;
