@@ -44,7 +44,7 @@
 
 ```bash
 # Clone the repo
-git clone https://github.com/YourUsername/Java-SystemInfo.git
+git clone https://github.com/raghibhaque/Java-SystemInfo.git
 cd Java-SystemInfo
 
 # Compile & run
