@@ -4,8 +4,12 @@ import oshi.hardware.*;
 import oshi.software.os.InternetProtocolStats;
 import oshi.software.os.OperatingSystem;
 import java.util.*; // for scanner
-import java.net.InetAddress; //for network
-import oshi.hardware.NetworkIF;
+import oshi.hardware.NetworkIF;//for network
+import java.util.Arrays;
+import java.util.List;
+import oshi.software.os.OSProcess;
+
+
 
 
 public class Main {
@@ -14,8 +18,6 @@ public class Main {
         SystemInfo si = new SystemInfo();
 
         while (true) {
-            System.out.println("input to continue");
-            sc.nextLine();
             System.out.println("===MENU===" +
                     "\n 1. Display SYSTEM INFO." +
                     "\n 2. Display TCPv4 Stats." +
@@ -27,7 +29,10 @@ public class Main {
                     "\n 8. PCI Info" +
                     "\n 9. Network Info" +
                     "\n 10. Battery Info" +
-                    "\n 11. Exit");
+                    "\n 11. System boot and updates" +
+                    "\n 12. Task manager" +
+                    "\n 13. User information" +
+                    "\n 14. Exit");
 
             switch (sc.nextInt()) {
                 case 1:
@@ -338,6 +343,7 @@ public class Main {
                             System.out.println("GPU: " + gpu.getName());
                             System.out.println("Vendor: " + gpu.getVendor());
                             System.out.println("Device ID: " + gpu.getDeviceId());
+                            System.out.printf("VRAM: %.2f GB%n", gpu.getVRam() / (1024.0 * 1024 * 1024));
                         }
                     } else if (choice == 2) {
                         List<NetworkIF> networks = si.getHardware().getNetworkIFs();
@@ -389,16 +395,18 @@ public class Main {
 
 
 
-//                    for (NetworkIF net : si.getHardware().getNetworkIFs()) {
-//                        System.out.println("Name: " + net.getName());
-//                        System.out.println("MAC: " + net.getMacaddr());
-//                        System.out.println("IPv4: " + Arrays.toString(net.getIPv4addr()));
-//                        System.out.println("IPv6: " + Arrays.toString(net.getIPv6addr()));
-//                        System.out.println("Interface speed: " + net.getSpeed() / 1_000_000 + " Mbps");
-//                        System.out.println("Physical medium: " + net.getNdisPhysicalMediumType());
-//                        System.out.println("Connector present: " + net.isConnectorPresent());
-//                        System.out.println("Alias: " + net.getIfAlias());
-//                    }
+                    for (NetworkIF net : si.getHardware().getNetworkIFs()) {
+                        System.out.println("Name: " + net.getName());
+                        System.out.println("MAC: " + net.getMacaddr());
+                        System.out.println("IPv4: " + Arrays.toString(net.getIPv4addr()));
+                        System.out.println("IPv6: " + Arrays.toString(net.getIPv6addr()));
+                        System.out.println("Interface speed: " + net.getSpeed() / 1_000_000 + " Mbps");
+                        System.out.println("Physical medium: " + net.getNdisPhysicalMediumType());
+                        System.out.println("Connector present: " + net.isConnectorPresent());
+                        System.out.println("Alias: " + net.getIfAlias());
+                    }
+
+
 
 
                     break;
@@ -415,12 +423,7 @@ public class Main {
                         {
                             System.out.printf("Name: %s%n", bat.getName());
                             System.out.printf("Charging: %s%n", bat.isCharging() ? "Yes" : "No");
-                            if(bat.getTemperature()!=0){
-                                System.out.println("Battery Temperature : " + bat.getTemperature() + "°C");
-                            }
-                            else{
-                                System.out.println("Battery Temperature : unavailable");
-                            }
+                            System.out.println("Battery Temperature : " + bat.getTemperature() + "°C");
                             System.out.println("Battery Voltage : " + bat.getVoltage() + "V");
                             System.out.println("Battery Manufacturer : " + bat.getManufacturer());
 
@@ -438,6 +441,38 @@ public class Main {
                     }
                     break;
                 case 11:
+                    //System boot and updates
+                    OperatingSystem osBoot = si.getOperatingSystem();
+                    long bootTime = osBoot.getSystemBootTime();
+                    long up = osBoot.getSystemUptime();
+                    System.out.println("=== SYSTEM BOOT INFO ===");
+                    System.out.println("Boot Time (epoch): " + bootTime);
+                    System.out.println("System Uptime: " + (up / 3600) + " hours");
+                    System.out.println("Booted Since: " + new java.util.Date(bootTime * 1000L));
+                    break;
+                case 12:
+                    //Task manager view
+                    OperatingSystem os18 = si.getOperatingSystem();
+                    List<OSProcess> procs = os18.getProcesses(null, OperatingSystem.ProcessSorting.CPU_DESC, 10);
+                    for (oshi.software.os.OSProcess p : procs) {
+                        System.out.printf("%s (PID %d) CPU: %.1f%% MEM: %.1f%%%n",
+                                p.getName(), p.getProcessID(),
+                                100d * p.getProcessCpuLoadCumulative(),
+                                100d * p.getResidentSetSize() / si.getHardware().getMemory().getTotal());
+                    }
+                    break;
+                case 13:
+                    //User info dir
+                    OperatingSystem os21 = si.getOperatingSystem();
+                    System.out.println("=== USER INFO ===");
+                    System.out.println("Current User: " + System.getProperty("user.name"));
+                    System.out.println("Home Directory: " + System.getProperty("user.home"));
+                    System.out.println("Host Name: " + os21.getNetworkParams().getHostName());
+                    System.out.println("Domain Name: " + os21.getNetworkParams().getDomainName());
+                    System.out.println("DNS Servers: " + Arrays.toString(os21.getNetworkParams().getDnsServers()));
+                    break;
+
+                case 14:
                     System.out.println("Exiting program...");
                     sc.close();
                     return;
