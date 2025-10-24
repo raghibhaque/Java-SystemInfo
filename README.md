@@ -1,3 +1,12 @@
+<p align="center">
+  <img src="https://github.com/raghibhaque/Java-SystemInfo/blob/main/image_2025-10-24_191045291.png?raw=true" 
+       alt="Java System Info CLI Banner" 
+       width="100%">
+</p>
+
+<h1 align="center">🖥️ Java System Info CLI</h1>
+
+
 <h1 align="center">🖥️ Java System Info CLI</h1>
 
 <p align="center">
