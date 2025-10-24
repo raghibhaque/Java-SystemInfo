@@ -14,6 +14,8 @@ public class Main {
         SystemInfo si = new SystemInfo();
 
         while (true) {
+            System.out.println("input to continue");
+            sc.nextLine();
             System.out.println("===MENU===" +
                     "\n 1. Display SYSTEM INFO." +
                     "\n 2. Display TCPv4 Stats." +
@@ -413,7 +415,12 @@ public class Main {
                         {
                             System.out.printf("Name: %s%n", bat.getName());
                             System.out.printf("Charging: %s%n", bat.isCharging() ? "Yes" : "No");
-                            System.out.println("Battery Temperature : " + bat.getTemperature() + "°C");
+                            if(bat.getTemperature()!=0){
+                                System.out.println("Battery Temperature : " + bat.getTemperature() + "°C");
+                            }
+                            else{
+                                System.out.println("Battery Temperature : unavailable");
+                            }
                             System.out.println("Battery Voltage : " + bat.getVoltage() + "V");
                             System.out.println("Battery Manufacturer : " + bat.getManufacturer());
 
