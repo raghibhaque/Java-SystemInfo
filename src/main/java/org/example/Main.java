@@ -6,7 +6,6 @@ import oshi.software.os.OperatingSystem;
 import java.util.*; // for scanner
 import java.net.InetAddress; //for network
 import oshi.hardware.NetworkIF;
-import oshi.jna.platform.windows.PowrProf;
 
 
 public class Main {
@@ -190,6 +189,9 @@ public class Main {
                     } else {
                         System.out.println("Swap: Not available or disabled");
                     }
+                    System.out.println("Max Virtual Memory : " + swap.getVirtualMax()/(1024*1024*1024) + "GB");
+                    System.out.println("Current Virtual Memory : " + swap.getVirtualInUse()/(1024*1024*1024) + "GB");
+
 
                     List<PhysicalMemory> ramModules = memory.getPhysicalMemory();
                     if (!ramModules.isEmpty()) {
@@ -411,9 +413,9 @@ public class Main {
                         {
                             System.out.printf("Name: %s%n", bat.getName());
                             System.out.printf("Charging: %s%n", bat.isCharging() ? "Yes" : "No");
-                            System.out.println("Battery Temperature : " + bat.getTemperature());
-                            System.out.println("Battery Voltage : " + bat.getVoltage());
-                            System.out.println("Battery Manufacter : " + bat.getManufacturer());
+                            System.out.println("Battery Temperature : " + bat.getTemperature() + "°C");
+                            System.out.println("Battery Voltage : " + bat.getVoltage() + "V");
+                            System.out.println("Battery Manufacturer : " + bat.getManufacturer());
 
                             double timeRemaining = bat.getTimeRemainingEstimated();
                             if (timeRemaining >= 0)
