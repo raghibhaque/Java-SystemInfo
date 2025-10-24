@@ -7,8 +7,6 @@
 <h1 align="center">🖥️ Java System Info CLI</h1>
 
 
-<h1 align="center">🖥️ Java System Info CLI</h1>
-
 <p align="center">
   <i>A clean & powerful system information tool built in pure Java using the <a href="https://github.com/oshi/oshi">OSHI</a> library.</i><br>
   <b>Displays live CPU, memory, disk, network, battery, and system stats — all in your terminal. Done over the course of a week for a group project.</b>
