@@ -2,6 +2,7 @@ package org.example;
 import oshi.SystemInfo; // for sys info
 import oshi.hardware.*;
 import oshi.software.os.InternetProtocolStats;
+import oshi.software.os.OSFileStore;
 import oshi.software.os.OperatingSystem;
 import java.util.*; // for scanner
 import oshi.hardware.NetworkIF;//for network
@@ -71,12 +72,26 @@ public class Main {
                     //
 
                     System.out.println("\n=== Cache Hierarchy ===");
+                    if(si.getOperatingSystem().getFamily()=="Windows"){
+                        System.out.println("Subject to inaccuracy for Windows");
+                    }
                     List<CentralProcessor.ProcessorCache> caches = processor.getProcessorCaches(); // Gets a list of all cache levels
+
                     for (CentralProcessor.ProcessorCache cache : caches) // Loops through each cache found in the CPU.
                     {
                         long size = cache.getCacheSize();
-                        String cacheSize = size > 0 ? String.format("%.2f MB", size / 1_000_000.0) : "Unavailable"; // div by 1,000,000 - base 10
-                        System.out.printf("Level %d %s Cache: %s%n", cache.getLevel(), cache.getType(), cacheSize);
+                        if (size>=1_000_000) {
+                            String cacheSize = String.format("%.2f MB", size / 1_000_000.0); // div by 1,000,000 - base 10
+                            System.out.printf("Level %d %s Cache: %s%n", cache.getLevel(), cache.getType(), cacheSize);
+                        }
+                        else if(size>=1000){
+                            String cacheSize = String.format("%.2f KB", size / 1_000.0); // div by 1,000- base 10
+                            System.out.printf("Level %d %s Cache: %s%n", cache.getLevel(), cache.getType(), cacheSize);
+                        }
+                        else{
+                            String cacheSize = size > 0 ? String.format("%s Bytes", size) : "Unavailable"; // div by 1,000,000 - base 10
+                            System.out.printf("Level %d %s Cache: %s,%n", cache.getLevel(), cache.getType(), cacheSize);
+                        }
                     }
 
                     double temp = sensors.getCpuTemperature();
@@ -222,33 +237,47 @@ public class Main {
                 // --- DISK INFO ---
                 case 7: // done by matt
                     List<HWDiskStore> diskInfo = si.getHardware().getDiskStores();//hard drive section start
+                    List<OSFileStore> diskSoft=si.getOperatingSystem().getFileSystem().getFileStores();
+                    for (int i=0;i< diskSoft.size();i++) {
 
-                    for (int i=0;i< diskInfo.size();i++) {
-                        diskInfo.get(i).updateAttributes();
-                        System.out.println("\nDisplaying disk "+i +"'s information");//disk name as number
-                        double diskSize = diskInfo.get(i).getSize();
+                        System.out.println();//print for tidyness
+                        //set up
+                        diskInfo.get(i).updateAttributes();//recent values
+                        diskSoft.get(i).updateAttributes();
+                        OperatingSystem os=si.getOperatingSystem();//new object
+                        OSFileStore currentDisk =os.getFileSystem().getFileStores().get(i);//current disk
 
-                        //section to get the file type
-                        OperatingSystem os=si.getOperatingSystem();
+                        System.out.println(currentDisk.getLabel()+", "+currentDisk.getName());
                         System.out.println("it uses the "+os.getFileSystem().getFileStores().get(0).getType()+" file system");
 
+                        double diskSize= currentDisk.getTotalSpace();
+                        double diskRemaining= currentDisk.getFreeSpace();
+                        double diskUsed= diskSize-diskRemaining;
 
-                        //section for total size
+
+                        //section for total size in units
+
                         if (diskSize >= 1000000 && diskSize < 1000000000) {//makes MB if best
-                            int diskSizeUnit = (int) (diskSize / 1000000);
+                            int diskSizeUnit = (int)(diskSize / 1000000);
                             System.out.println("Disk has " + diskSizeUnit + "MB total");
                         }
                         if (diskSize >= 1000000000) {//makes GB if best
-                            int diskSizeUnit = (int) (diskSize / 1000000000);
-                            System.out.println("Disk has " + diskSizeUnit + "GB total");
+                            int diskSizeUnit =  (int)(diskSize / 1000000000);
+                            if (diskSizeUnit>=1000){//if TB is best
+                                double diskSizeBigUnit=(((double)(diskSizeUnit/10))/100);
+                                System.out.println("Disk has " + diskSizeBigUnit + " TB total");
+                            }
+                            else{
+                                System.out.println("Disk has " + diskSizeUnit + " GB total");
+                            }
                         }
                         if (diskSize < 1000000) {//makes Bytes if nothing else applies
                             int diskSizeUnit = (int) diskSize;
                             System.out.println("Disk has " + diskSizeUnit + "Bytes total");
                         }
 
-                        // section to get amt disk used
-                        double diskUsed = diskInfo.get(i).getWriteBytes();
+                        // section to get amt disk used int units
+
                         if (diskUsed >= 1000000 && diskUsed < 1000000000) {//makes MB if best
                             int diskUsedUnit = (int) (diskUsed / 1000000);
                             System.out.println("Disk has " + diskUsedUnit + "MB in use");
@@ -262,8 +291,8 @@ public class Main {
                             System.out.println("Disk has " + diskUsedUnit + "Bytes in use");
                         }
 
-                        //section to get amount of disk free
-                        double diskRemaining = diskSize - diskUsed;
+                        //section to get amount of disk free in units
+
                         if (diskRemaining >= 1000000 && diskRemaining < 1000000000) {//makes MB if best
                             int diskRemainingUnit = (int) (diskRemaining / 1000000);
                             System.out.println("Disk has " + diskRemainingUnit + "MB free");
@@ -319,8 +348,8 @@ public class Main {
 
                         double writePercent=(long)((transTimeTotal/5000)*10000);
                         //Liza
-                        double readSpeedMB = (readsMBTotal) / 1024.0 / 1024 / 5; // per second
-                        double writeSpeedMB = (writesMBTotal) / 1024.0 / 1024 / 5; // per second
+                        double readSpeedMB = (readsMBTotal) / 1000.0 / 1000 / 5; // per second  //1000 not 1024 because MB is in root 10, while MiB is root 2, I think?
+                        double writeSpeedMB = (writesMBTotal) / 1000.0 / 1000 / 5; // per second  //Feel Free to disagree
                         System.out.println("This drive is currently in use an average of "+writePercent/100+"% of the time");
                         System.out.println("This drive is currently conducting an average of "+(int) ((((readsTotal+writesTotal)/transTimeTotal)/5)*1000)+" reads/writes per second");
                         System.out.printf("Read Speed: %.2f MB/s%n", readSpeedMB);
