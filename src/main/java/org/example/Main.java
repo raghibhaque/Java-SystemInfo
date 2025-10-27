@@ -9,9 +9,7 @@ import oshi.hardware.NetworkIF;//for network
 import java.util.Arrays;
 import java.util.List;
 import oshi.software.os.OSProcess;
-
-
-
+import oshi.util.EdidUtil;
 
 public class Main {
     public static void main(String[] args) {
@@ -33,7 +31,8 @@ public class Main {
                     "\n 11. System boot and updates" +
                     "\n 12. Task manager" +
                     "\n 13. User information" +
-                    "\n 14. Exit");
+                    "\n 14. Display Monitor Info" +
+                    "\n 15. Exit");
 
             switch (sc.nextInt()) {
                 case 1:
@@ -89,7 +88,7 @@ public class Main {
                             System.out.printf("Level %d %s Cache: %s%n", cache.getLevel(), cache.getType(), cacheSize);
                         }
                         else{
-                            String cacheSize = size > 0 ? String.format("%s Bytes", size) : "Unavailable"; // div by 1,000,000 - base 10
+                            String cacheSize = size > 0 ? String.format("%s Bytes", size) : "Unavailable";
                             System.out.printf("Level %d %s Cache: %s,%n", cache.getLevel(), cache.getType(), cacheSize);
                         }
                     }
@@ -240,7 +239,7 @@ public class Main {
                     List<OSFileStore> diskSoft=si.getOperatingSystem().getFileSystem().getFileStores();
                     for (int i=0;i< diskSoft.size();i++) {
 
-                        System.out.println();//print for tidyness
+                        System.out.println();//print for tidiness
                         //set up
                         diskInfo.get(i).updateAttributes();//recent values
                         diskSoft.get(i).updateAttributes();
@@ -501,7 +500,61 @@ public class Main {
                     System.out.println("DNS Servers: " + Arrays.toString(os21.getNetworkParams().getDnsServers()));
                     break;
 
-                case 14:
+                case 14: // raghib
+                    // OSHI API: https://www.oshi.ooo/oshi-core/apidocs/oshi/hardware/Display.html + https://www.oshi.ooo/oshi-core/apidocs/oshi/util/EdidUtil.html
+                    System.out.println("=== DISPLAY / EDID INFORMATION ===");
+                    List<Display> displays = si.getHardware().getDisplays();
+
+                    if (displays.isEmpty()) {
+                        System.out.println("No displays detected.");
+                    }
+                    else
+                    {
+                        int displayIndex = 1;
+                        for (Display display : displays) {
+                            System.out.println("\n--- Display " + displayIndex + " ---");
+
+                            // Extract EDID raw bytes
+                            byte[] edid = display.getEdid();
+
+                            String manufacturer = EdidUtil.getManufacturerID(edid);
+                            int widthCm  = EdidUtil.getHcm(edid);
+                            int heightCm = EdidUtil.getVcm(edid);
+                            boolean isDigital = EdidUtil.isDigital(edid);
+
+                            System.out.println("Manufacturer: " + manufacturer);
+                            System.out.println("Display Type: " + (isDigital ? "Digital" : "Analog"));
+                            System.out.println("Width: " + widthCm + " cm");
+                            System.out.println("Height: " + heightCm + " cm");
+
+
+                            if (widthCm > 0 && heightCm > 0)
+                            {
+                                double aspect = (double) widthCm / heightCm;
+                                System.out.printf("Approx. Aspect Ratio: %.2f:1%n", aspect);
+                            }
+                            displayIndex++;
+                        }
+                    }
+                    try {
+                        java.awt.GraphicsEnvironment ge = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment();
+                        java.awt.GraphicsDevice[] screens = ge.getScreenDevices();
+
+                        int screenNum = 1;
+                        for (java.awt.GraphicsDevice screen : screens) {
+                            java.awt.DisplayMode mode = screen.getDisplayMode(); // https://docs.oracle.com/javase/8/docs/api/java/awt/DisplayMode.html
+                            System.out.println("\n=== Current Display Settings for Screen " + screenNum + " ===");
+                            System.out.println("Resolution: " + mode.getWidth() + " x " + mode.getHeight());
+                            System.out.println("Refresh Rate: " + mode.getRefreshRate() + " Hz");
+                            System.out.println("Bit Depth: " + mode.getBitDepth() + " bits per pixel");
+                            screenNum++;
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Unable to retrieve current display settings: " + e.getMessage());
+                    }
+                    break;
+
+                case 15:
                     System.out.println("Exiting program...");
                     sc.close();
                     return;
