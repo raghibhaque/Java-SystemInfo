@@ -72,7 +72,7 @@ public class Main {
                     //
 
                     System.out.println("\n=== Cache Hierarchy ===");
-                    if(si.getOperatingSystem().getFamily()=="Windows"){
+                    if (si.getOperatingSystem().getFamily().equalsIgnoreCase("Windows")) {
                         System.out.println("Subject to inaccuracy for Windows");
                     }
                     List<CentralProcessor.ProcessorCache> caches = processor.getProcessorCaches(); // Gets a list of all cache levels
@@ -106,7 +106,11 @@ public class Main {
                     System.out.println("\nCollecting CPU usage snapshot...");
                     long[] prevTicks = processor.getSystemCpuLoadTicks();
                     try {
-                        Thread.sleep(1000); } catch (InterruptedException ignored) {
+                        Thread.sleep(1000);
+                    }
+                    catch
+                    (InterruptedException ignored)
+                    {
                     }
                     double avgLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
                     System.out.printf("Average CPU Load: %.1f%%%n", avgLoad);
@@ -116,7 +120,11 @@ public class Main {
                     //
 
                     long[][] prevCoreTicks = processor.getProcessorCpuLoadTicks();
-                    try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ignored) {
+
+                    }
                     double[] perCore = processor.getProcessorCpuLoadBetweenTicks(prevCoreTicks);
 
                     if (perCore != null) {
