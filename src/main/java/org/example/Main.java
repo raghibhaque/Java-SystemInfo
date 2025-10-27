@@ -72,7 +72,7 @@ public class Main {
                     //
 
                     System.out.println("\n=== Cache Hierarchy ===");
-                    if(si.getOperatingSystem().getFamily()=="Windows"){
+                    if(si.getOperatingSystem().getFamily().equalsIgnoreCase("Windows")){
                         System.out.println("Subject to inaccuracy for Windows");
                     }
                     List<CentralProcessor.ProcessorCache> caches = processor.getProcessorCaches(); // Gets a list of all cache levels
