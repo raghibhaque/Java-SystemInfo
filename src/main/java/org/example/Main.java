@@ -5,9 +5,6 @@ import oshi.software.os.InternetProtocolStats;
 import oshi.software.os.OSFileStore;
 import oshi.software.os.OperatingSystem;
 import java.util.*; // for scanner
-import oshi.hardware.NetworkIF;//for network
-import java.util.Arrays;
-import java.util.List;
 import oshi.software.os.OSProcess;
 import oshi.util.EdidUtil;
 
@@ -17,6 +14,8 @@ public class Main {
         SystemInfo si = new SystemInfo();
 
         while (true) {
+            System.out.println("press enter to continue");
+            sc.nextLine();
             System.out.println("===MENU===" +
                     "\n 1. Display SYSTEM INFO." +
                     "\n 2. Display TCPv4 Stats." +
@@ -320,6 +319,7 @@ public class Main {
                         long readsMB1=disk.getReadBytes();
                         long writes1=disk.getWrites();
                         long writesMB1=disk.getWriteBytes();
+                        long startTime = System.currentTimeMillis();
                         //wait
                         System.out.print("please wait while disk usage is calculated");
                         try {
@@ -337,6 +337,7 @@ public class Main {
                         long readsMB2=disk.getReadBytes();
                         long writes2=disk.getWrites();
                         long writesMB2=disk.getWriteBytes();
+
 
                         //get reads/writes in time elapsed
                         double transTimeTotal=transTime2 - transTime1;
@@ -372,6 +373,7 @@ public class Main {
                             System.out.println("Vendor: " + gpu.getVendor());
                             System.out.println("Device ID: " + gpu.getDeviceId());
                             System.out.printf("VRAM: %.2f GB%n", gpu.getVRam() / (1024.0 * 1024 * 1024));
+                            System.out.println();
                         }
                     } else if (choice == 2) {
                         List<NetworkIF> networks = si.getHardware().getNetworkIFs();
@@ -381,6 +383,7 @@ public class Main {
                             System.out.println("MAC: " + net.getMacaddr());
                             System.out.println("IPv4: " + Arrays.toString(net.getIPv4addr()));
                             System.out.println("Speed: " + net.getSpeed() / 1_000_000 + " Mbps");
+                            System.out.println();
                         }
                     } else if (choice == 3) {
                         for (HWDiskStore disk : si.getHardware().getDiskStores()) {
@@ -388,6 +391,7 @@ public class Main {
                             System.out.println("Serial: " + disk.getSerial());
                             System.out.println("Reads: " + disk.getReads());
                             System.out.println("Writes: " + disk.getWrites());
+                            System.out.println();
                         }
                     } else {
                         System.out.println("Invalid PCI option!");
@@ -419,6 +423,7 @@ public class Main {
                         double downloadPercent = ((recvEnd - recvStart) * 8.0) / net.getSpeed() * 100;
 
                         System.out.printf("Upload usage: %.2f%%, Download usage: %.2f%%%n", uploadPercent, downloadPercent);
+                        System.out.println();
                     }
 
 
@@ -432,6 +437,7 @@ public class Main {
                         System.out.println("Physical medium: " + net.getNdisPhysicalMediumType());
                         System.out.println("Connector present: " + net.isConnectorPresent());
                         System.out.println("Alias: " + net.getIfAlias());
+                        System.out.println();
                     }
 
 
@@ -451,7 +457,12 @@ public class Main {
                         {
                             System.out.printf("Name: %s%n", bat.getName());
                             System.out.printf("Charging: %s%n", bat.isCharging() ? "Yes" : "No");
-                            System.out.println("Battery Temperature : " + bat.getTemperature() + "°C");
+                            if(bat.getTemperature()!=0.0) {
+                                System.out.println("Battery Temperature : " + bat.getTemperature() + "°C");
+                            }
+                            else{
+                                System.out.println("Battery Temperature : unavailable");
+                            }
                             System.out.println("Battery Voltage : " + bat.getVoltage() + "V");
                             System.out.println("Battery Manufacturer : " + bat.getManufacturer());
 
