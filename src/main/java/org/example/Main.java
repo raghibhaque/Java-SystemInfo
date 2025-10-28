@@ -14,7 +14,8 @@ public class Main {
         SystemInfo si = new SystemInfo();
 
         while (true) {
-            System.out.println("press enter to continue");
+            System.out.println("\n");
+            System.out.println("Press ENTER to continue");
             sc.nextLine();
             System.out.println("===MENU===" +
                     "\n 1. Display SYSTEM INFO." +
@@ -34,7 +35,7 @@ public class Main {
                     "\n 15. Exit");
 
             switch (sc.nextInt()) {
-                case 1:
+                case 1: // Raghib
                     ComputerSystem cs2 = si.getHardware().getComputerSystem();
                     System.out.println("\n=== SYSTEM DETAILS ===");
                     System.out.println("Manufacturer : " + cs2.getManufacturer());
@@ -44,7 +45,7 @@ public class Main {
                     System.out.println("Current Platform : " + SystemInfo.getCurrentPlatform());
                     break;
 
-                case 2:
+                case 2: // Raghib
                     InternetProtocolStats ipStats = si.getOperatingSystem().getInternetProtocolStats();
                     System.out.println("=== TCPv4 & UDP Statistics ===");
                     System.out.println("TCPv4 Stats: " + ipStats.getTCPv4Stats()); // connection oriented
@@ -53,7 +54,7 @@ public class Main {
                     System.out.println("UDPv6 Stats: " + ipStats.getUDPv6Stats());
                     break;
 
-                case 3: // Get access to CPU and sensor information aka temps,freqs , the lot
+                case 3: // Get access to CPU and sensor information aka temps,freqs , the lot - Raghib
                     CentralProcessor processor = si.getHardware().getProcessor();
                     Sensors sensors = si.getHardware().getSensors();
                     System.out.println("\n=== CPU INFORMATION ===");// Basic CPU details
@@ -226,6 +227,7 @@ public class Main {
                     } else {
                         System.out.println("RAM module information unavailable.");
                     }
+                    // Raghib
                     int barLength = 30;
                     int barFilled = (int) (barLength * percentUsed / 100);
                     String bar = "[" + "#".repeat(barFilled) + "-".repeat(barLength - barFilled) + "]";
