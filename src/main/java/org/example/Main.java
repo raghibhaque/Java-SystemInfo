@@ -5,8 +5,13 @@ import oshi.software.os.InternetProtocolStats;
 import oshi.software.os.OSFileStore;
 import oshi.software.os.OperatingSystem;
 import java.util.*; // for scanner
+import oshi.hardware.NetworkIF;//for network
+import java.util.Arrays;
+import java.util.List;
 import oshi.software.os.OSProcess;
 import oshi.util.EdidUtil;
+import oshi.software.os.OSThread;
+import oshi.software.os.OSService;
 
 public class Main {
     public static void main(String[] args) {
@@ -14,9 +19,6 @@ public class Main {
         SystemInfo si = new SystemInfo();
 
         while (true) {
-            System.out.println("\n");
-            System.out.println("Press ENTER to continue");
-            sc.nextLine();
             System.out.println("===MENU===" +
                     "\n 1. Display SYSTEM INFO." +
                     "\n 2. Display TCPv4 Stats." +
@@ -26,16 +28,15 @@ public class Main {
                     "\n 6. Memory Info" +
                     "\n 7. Disk Info" +
                     "\n 8. PCI Info" +
-                    "\n 9. Network Info" +
-                    "\n 10. Battery Info" +
-                    "\n 11. System boot and updates" +
-                    "\n 12. Task manager" +
-                    "\n 13. User information" +
-                    "\n 14. Display Monitor Info" +
-                    "\n 15. Exit");
+                    "\n 9. Battery Info" +
+                    "\n 10. System boot and updates" +
+                    "\n 11. Task manager" +
+                    "\n 12. User information" +
+                    "\n 13. Display Monitor Info" +
+                    "\n 14. Exit");
 
             switch (sc.nextInt()) {
-                case 1: // Raghib
+                case 1:
                     ComputerSystem cs2 = si.getHardware().getComputerSystem();
                     System.out.println("\n=== SYSTEM DETAILS ===");
                     System.out.println("Manufacturer : " + cs2.getManufacturer());
@@ -45,7 +46,7 @@ public class Main {
                     System.out.println("Current Platform : " + SystemInfo.getCurrentPlatform());
                     break;
 
-                case 2: // Raghib
+                case 2:
                     InternetProtocolStats ipStats = si.getOperatingSystem().getInternetProtocolStats();
                     System.out.println("=== TCPv4 & UDP Statistics ===");
                     System.out.println("TCPv4 Stats: " + ipStats.getTCPv4Stats()); // connection oriented
@@ -54,7 +55,7 @@ public class Main {
                     System.out.println("UDPv6 Stats: " + ipStats.getUDPv6Stats());
                     break;
 
-                case 3: // Get access to CPU and sensor information aka temps,freqs , the lot - Raghib
+                case 3: // Get access to CPU and sensor information aka temps,freqs , the lot
                     CentralProcessor processor = si.getHardware().getProcessor();
                     Sensors sensors = si.getHardware().getSensors();
                     System.out.println("\n=== CPU INFORMATION ===");// Basic CPU details
@@ -63,6 +64,7 @@ public class Main {
                     System.out.println("Architecture: " + processor.getProcessorIdentifier().getMicroarchitecture());
                     System.out.println("Logical Cores: " + processor.getLogicalProcessorCount());
                     System.out.println("Physical Cores: " + processor.getPhysicalProcessorCount());
+                    //num of physical cpu chips
                     System.out.println("Packages: " + processor.getPhysicalPackageCount());
                     System.out.println("CPU Voltage: " + sensors.getCpuVoltage() + " V");
                     //Liza
@@ -103,10 +105,13 @@ public class Main {
                     }
 
                     System.out.println("\nCollecting CPU usage snapshot...");
+                    //time cpu spends doing work since start
                     long[] prevTicks = processor.getSystemCpuLoadTicks();
+                    //need time to pass between two CPU tick how much cpu was used
                     try {
                         Thread.sleep(1000); } catch (InterruptedException ignored) {
                     }
+                    //compares the current CPU tick data with the previous snapshot prevtick
                     double avgLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
                     System.out.printf("Average CPU Load: %.1f%%%n", avgLoad);
                     //Liza
@@ -122,6 +127,7 @@ public class Main {
                         System.out.println("\n=== Core Utilization ===");
                         //Liza
                         double[] coreLoads = new double[perCore.length];
+                        //converts to %
                         for (int i = 0; i < perCore.length; i++) {
                             coreLoads[i] = perCore[i] * 100;
                             System.out.printf("Core %d: %.1f%%%n", i + 1, coreLoads[i]);
@@ -130,6 +136,7 @@ public class Main {
                         Arrays.sort(sortedLoads);
                         boolean[] printed = new boolean[coreLoads.length];
                         System.out.println("\n=== Most Active Cores ===");
+                        //sorting by greatest value
                         for (int i = sortedLoads.length - 1; i >= 0; i--) {
                             for (int j = 0; j < coreLoads.length; j++) {
                                 if (!printed[j] && sortedLoads[i] == coreLoads[j]) {
@@ -147,12 +154,14 @@ public class Main {
                     Baseboard base = cs.getBaseboard();
 
                     System.out.println("=== Firmware Information ===");
+                    //low-level software used before your operating system runs
                     System.out.println("Name: " + firm.getName());
                     System.out.println("Version: " + firm.getVersion());
                     System.out.println("Manufacturer: " + firm.getManufacturer());
                     System.out.println("Release Date: " + firm.getReleaseDate());
 
                     System.out.println("\n=== Baseboard Information ===");
+                    //motherboard
                     System.out.println("Manufacturer: " + base.getManufacturer());
                     System.out.println("Model: " + base.getModel());
                     System.out.println("Version: " + base.getVersion());
@@ -161,6 +170,7 @@ public class Main {
 
                 case 5:
                     System.out.println("=== USB DEVICE INFORMATION ===");
+                    //tree structure devices and their child devices
                     List<UsbDevice> usbDevices = si.getHardware().getUsbDevices(true);
                     System.out.println("USB Devices - Hierarchical (All Connected):");
                     for (UsbDevice device : usbDevices) {
@@ -173,6 +183,7 @@ public class Main {
                     }
 
                     System.out.println("\nUSB Devices - Directly Connected:");
+                    //flat list just the top-level USB devices
                     List<UsbDevice> topDevices = si.getHardware().getUsbDevices(false);
                     for (UsbDevice device : topDevices) { // for every device in the list we print its own details
                         System.out.println("=====");
@@ -199,8 +210,8 @@ public class Main {
                     System.out.printf("Used Memory : %.2f GB (%.1f%%)%n", usedGB, percentUsed);
                     System.out.printf("Free Memory : %.2f GB%n", available / (1024.0 * 1024 * 1024));
                     System.out.printf("Memory Efficiency: %.2f%% free%n", memEff);
-                    //
-                    //  Swap memory
+
+                    //  Swap memory back up eg SSD
                     VirtualMemory swap = memory.getVirtualMemory();
                     double swapUsedGB = swap.getSwapUsed() / (1024.0 * 1024 * 1024);
                     double swapTotalGB = swap.getSwapTotal() / (1024.0 * 1024 * 1024);
@@ -212,6 +223,7 @@ public class Main {
                     }
                     System.out.println("Max Virtual Memory : " + swap.getVirtualMax()/(1024*1024*1024) + "GB");
                     System.out.println("Current Virtual Memory : " + swap.getVirtualInUse()/(1024*1024*1024) + "GB");
+
 
 
                     List<PhysicalMemory> ramModules = memory.getPhysicalMemory();
@@ -227,7 +239,6 @@ public class Main {
                     } else {
                         System.out.println("RAM module information unavailable.");
                     }
-                    // Raghib
                     int barLength = 30;
                     int barFilled = (int) (barLength * percentUsed / 100);
                     String bar = "[" + "#".repeat(barFilled) + "-".repeat(barLength - barFilled) + "]";
@@ -242,6 +253,7 @@ public class Main {
 
                         System.out.println();//print for tidiness
                         //set up
+
                         diskInfo.get(i).updateAttributes();//recent values
                         diskSoft.get(i).updateAttributes();
                         OperatingSystem os=si.getOperatingSystem();//new object
@@ -321,7 +333,6 @@ public class Main {
                         long readsMB1=disk.getReadBytes();
                         long writes1=disk.getWrites();
                         long writesMB1=disk.getWriteBytes();
-                        long startTime = System.currentTimeMillis();
                         //wait
                         System.out.print("please wait while disk usage is calculated");
                         try {
@@ -339,7 +350,6 @@ public class Main {
                         long readsMB2=disk.getReadBytes();
                         long writes2=disk.getWrites();
                         long writesMB2=disk.getWriteBytes();
-
 
                         //get reads/writes in time elapsed
                         double transTimeTotal=transTime2 - transTime1;
@@ -375,17 +385,40 @@ public class Main {
                             System.out.println("Vendor: " + gpu.getVendor());
                             System.out.println("Device ID: " + gpu.getDeviceId());
                             System.out.printf("VRAM: %.2f GB%n", gpu.getVRam() / (1024.0 * 1024 * 1024));
-                            System.out.println();
                         }
                     } else if (choice == 2) {
-                        List<NetworkIF> networks = si.getHardware().getNetworkIFs();
-                        for (NetworkIF net : networks) {
+                        //Liza
+                        for (NetworkIF net : si.getHardware().getNetworkIFs()) {
+                            net.updateAttributes();
+                            long sentStart = net.getBytesSent();
+                            long recvStart = net.getBytesRecv();//received
+                            long startTime = System.currentTimeMillis();
+
+                            net.updateAttributes();//clear cache
+                            long sentEnd = net.getBytesSent();
+                            long recvEnd = net.getBytesRecv();
+                            long elapsedMs = System.currentTimeMillis() - startTime;
+
+                            //bytes transfered converted to KB per sec
+                            double uploadKBs = (sentEnd - sentStart) / 1024.0 / (elapsedMs / 1000.0);
+                            double downloadKBs = (recvEnd - recvStart) / 1024.0 / (elapsedMs / 1000.0);
+
+                            System.out.printf("%s - Upload: %.2f KB/s, Download: %.2f KB/s%n",
+                                    net.getName(), uploadKBs, downloadKBs);
+
                             System.out.println("Name: " + net.getName());
-                            System.out.println("Display name: " + net.getDisplayName());
                             System.out.println("MAC: " + net.getMacaddr());
+                            //internet protocols
                             System.out.println("IPv4: " + Arrays.toString(net.getIPv4addr()));
-                            System.out.println("Speed: " + net.getSpeed() / 1_000_000 + " Mbps");
-                            System.out.println();
+                            System.out.println("IPv6: " + Arrays.toString(net.getIPv6addr()));
+                            //speed in bits per sec to megabits
+                            System.out.println("Interface speed: " + net.getSpeed() / 1000000 + " Mbps");
+                            //kind of network
+                            System.out.println("Physical medium/kind: " + net.getNdisPhysicalMediumType());
+                            //wireless?
+                            System.out.println("Connector present: " + net.isConnectorPresent());
+                            System.out.println("Alias: " + net.getIfAlias());
+
                         }
                     } else if (choice == 3) {
                         for (HWDiskStore disk : si.getHardware().getDiskStores()) {
@@ -393,61 +426,14 @@ public class Main {
                             System.out.println("Serial: " + disk.getSerial());
                             System.out.println("Reads: " + disk.getReads());
                             System.out.println("Writes: " + disk.getWrites());
-                            System.out.println();
                         }
                     } else {
                         System.out.println("Invalid PCI option!");
                     }
                     break;
 
-                //Liza
-                case 9:
-                    for (NetworkIF net : si.getHardware().getNetworkIFs()) {
-                        net.updateAttributes();
-                        long sentStart = net.getBytesSent();
-                        long recvStart = net.getBytesRecv();
-                        long startTime = System.currentTimeMillis();
-
-                        try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
-
-                        net.updateAttributes();
-                        long sentEnd = net.getBytesSent();
-                        long recvEnd = net.getBytesRecv();
-                        long elapsedMs = System.currentTimeMillis() - startTime; // actual time passed
-
-                        double uploadKBs = (sentEnd - sentStart) / 1024.0 / (elapsedMs / 1000.0);
-                        double downloadKBs = (recvEnd - recvStart) / 1024.0 / (elapsedMs / 1000.0);
-
-                        System.out.printf("%s - Upload: %.2f KB/s, Download: %.2f KB/s%n",
-                                net.getName(), uploadKBs, downloadKBs);
-
-                        double uploadPercent = ((sentEnd - sentStart) * 8.0) / net.getSpeed() * 100;
-                        double downloadPercent = ((recvEnd - recvStart) * 8.0) / net.getSpeed() * 100;
-
-                        System.out.printf("Upload usage: %.2f%%, Download usage: %.2f%%%n", uploadPercent, downloadPercent);
-                        System.out.println();
-                    }
-
-
-
-                    for (NetworkIF net : si.getHardware().getNetworkIFs()) {
-                        System.out.println("Name: " + net.getName());
-                        System.out.println("MAC: " + net.getMacaddr());
-                        System.out.println("IPv4: " + Arrays.toString(net.getIPv4addr()));
-                        System.out.println("IPv6: " + Arrays.toString(net.getIPv6addr()));
-                        System.out.println("Interface speed: " + net.getSpeed() / 1_000_000 + " Mbps");
-                        System.out.println("Physical medium: " + net.getNdisPhysicalMediumType());
-                        System.out.println("Connector present: " + net.isConnectorPresent());
-                        System.out.println("Alias: " + net.getIfAlias());
-                        System.out.println();
-                    }
-
-
-
-
-                    break;
                 // Raghib - battery info
-                case 10: // https://www.oshi.ooo/oshi-core/apidocs/oshi/hardware/PowerSource.html
+                case 9: // https://www.oshi.ooo/oshi-core/apidocs/oshi/hardware/PowerSource.html
                     List<PowerSource> batteries = si.getHardware().getPowerSources();
                     System.out.println("=== Battery Info ===");
 
@@ -459,12 +445,7 @@ public class Main {
                         {
                             System.out.printf("Name: %s%n", bat.getName());
                             System.out.printf("Charging: %s%n", bat.isCharging() ? "Yes" : "No");
-                            if(bat.getTemperature()!=0.0) {
-                                System.out.println("Battery Temperature : " + bat.getTemperature() + "°C");
-                            }
-                            else{
-                                System.out.println("Battery Temperature : unavailable");
-                            }
+                            System.out.println("Battery Temperature : " + bat.getTemperature() + "°C");
                             System.out.println("Battery Voltage : " + bat.getVoltage() + "V");
                             System.out.println("Battery Manufacturer : " + bat.getManufacturer());
 
@@ -481,7 +462,7 @@ public class Main {
                         }
                     }
                     break;
-                case 11:
+                case 10:
                     //System boot and updates
                     OperatingSystem osBoot = si.getOperatingSystem();
                     long bootTime = osBoot.getSystemBootTime();
@@ -490,30 +471,52 @@ public class Main {
                     System.out.println("Boot Time (epoch): " + bootTime);
                     System.out.println("System Uptime: " + (up / 3600) + " hours");
                     System.out.println("Booted Since: " + new java.util.Date(bootTime * 1000L));
+
+
                     break;
-                case 12:
+                case 11:
                     //Task manager view
                     OperatingSystem os18 = si.getOperatingSystem();
-                    List<OSProcess> procs = os18.getProcesses(null, OperatingSystem.ProcessSorting.CPU_DESC, 10);
-                    for (oshi.software.os.OSProcess p : procs) {
-                        System.out.printf("%s (PID %d) CPU: %.1f%% MEM: %.1f%%%n",
-                                p.getName(), p.getProcessID(),
-                                100d * p.getProcessCpuLoadCumulative(),
-                                100d * p.getResidentSetSize() / si.getHardware().getMemory().getTotal());
+
+                    List<OSService> services = si.getOperatingSystem().getServices();
+                    System.out.println("=== SYSTEM SERVICES ===");
+                    for (OSService service : services) {
+                        System.out.println(service.getName() + " - Status: " + service.getState() + " - PID: " + service.getProcessID());
                     }
+                    //list of running processes / no filter
+                    List<OSProcess> procs = os18.getProcesses(null, OperatingSystem.ProcessSorting.CPU_DESC, 20);
+                    for (oshi.software.os.OSProcess p : procs) {
+                        System.out.printf("%s CPU: %.1f%%%n",
+                                p.getName(),
+                                100d * p.getProcessCpuLoadCumulative());
+                    }
+
+                    OSThread thread = si.getOperatingSystem().getCurrentThread();
+                    System.out.println("Current Thread ID: " + thread.getThreadId());
+                    System.out.println("Current Thread State: " + thread.getState());
+                    System.out.println("Thread CPU Time: " + thread.getKernelTime() + " ms kernel, " + thread.getUserTime() + " ms user");
+                    System.out.println("Thread Name: " + thread.getName());
+                    System.out.println("Thread Priority: " + thread.getPriority());
                     break;
-                case 13:
+                case 12:
                     //User info dir
                     OperatingSystem os21 = si.getOperatingSystem();
+                    //class System api / system info / InetAdress
                     System.out.println("=== USER INFO ===");
+                    //key-value
                     System.out.println("Current User: " + System.getProperty("user.name"));
                     System.out.println("Home Directory: " + System.getProperty("user.home"));
+                    //host name for IP adress
                     System.out.println("Host Name: " + os21.getNetworkParams().getHostName());
                     System.out.println("Domain Name: " + os21.getNetworkParams().getDomainName());
                     System.out.println("DNS Servers: " + Arrays.toString(os21.getNetworkParams().getDnsServers()));
+
+                    boolean elevated = si.getOperatingSystem().isElevated();
+                    System.out.println("Elevated Permissions: " + (elevated ? "Yes (Admin/Sudo)" : "No"));
+
                     break;
 
-                case 14: // raghib
+                case 13: // raghib
                     // OSHI API: https://www.oshi.ooo/oshi-core/apidocs/oshi/hardware/Display.html + https://www.oshi.ooo/oshi-core/apidocs/oshi/util/EdidUtil.html
                     System.out.println("=== DISPLAY / EDID INFORMATION ===");
                     List<Display> displays = si.getHardware().getDisplays();
@@ -555,7 +558,8 @@ public class Main {
 
                         int screenNum = 1;
                         for (java.awt.GraphicsDevice screen : screens) {
-                            java.awt.DisplayMode mode = screen.getDisplayMode(); // https://docs.oracle.com/javase/8/docs/api/java/awt/DisplayMode.html
+                            java.awt.DisplayMode mode = screen.getDisplayMode();
+                            // https://docs.oracle.com/javase/8/docs/api/java/awt/DisplayMode.html
                             System.out.println("\n=== Current Display Settings for Screen " + screenNum + " ===");
                             System.out.println("Resolution: " + mode.getWidth() + " x " + mode.getHeight());
                             System.out.println("Refresh Rate: " + mode.getRefreshRate() + " Hz");
@@ -567,7 +571,7 @@ public class Main {
                     }
                     break;
 
-                case 15:
+                case 14:
                     System.out.println("Exiting program...");
                     sc.close();
                     return;
