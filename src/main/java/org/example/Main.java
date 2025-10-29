@@ -35,6 +35,12 @@ public class Main {
                     "\n 13. Display Monitor Info" +
                     "\n 14. Exit");
 
+            if (!sc.hasNextInt()) {
+                System.out.println("Invalid input, please enter a number!");
+                sc.nextLine();
+                continue;
+            }
+
             switch (sc.nextInt()) {
                 case 1:
                     ComputerSystem cs2 = si.getHardware().getComputerSystem();
@@ -365,7 +371,7 @@ public class Main {
                         System.out.println("This drive is currently in use an average of "+writePercent/100+"% of the time");
                         System.out.println("This drive is currently conducting an average of "+(int) ((((readsTotal+writesTotal)/transTimeTotal)/5)*1000)+" reads/writes per second");
                         System.out.printf("Read Speed: %.2f MB/s%n", readSpeedMB);
-                        System.out.printf("Read Speed: %.2f MB/s%n", writeSpeedMB);
+                        System.out.printf("Write Speed: %.2f MB/s%n", writeSpeedMB);
                         //
                     }
                     break;
