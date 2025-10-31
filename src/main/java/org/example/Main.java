@@ -87,7 +87,7 @@ public class Main {
                     for (CentralProcessor.ProcessorCache cache : caches) // Loops through each cache found in the CPU.
                     {
                         long size = cache.getCacheSize();
-                        if (size>=1_000_000) {
+                        if (size>=1_000_000) { // Jerry
                             String cacheSize = String.format("%.2f MB", size / 1_000_000.0); // div by 1,000,000 - base 10
                             System.out.printf("Level %d %s Cache: %s%n", cache.getLevel(), cache.getType(), cacheSize);
                         }
@@ -252,128 +252,71 @@ public class Main {
                     break;
 
                 // --- DISK INFO ---
-                case 7: // done by matt
-                    List<HWDiskStore> diskInfo = si.getHardware().getDiskStores();//hard drive section start
-                    List<OSFileStore> diskSoft=si.getOperatingSystem().getFileSystem().getFileStores();
-                    for (int i=0;i< diskSoft.size();i++) {
+                case 7:
+                    List<HWDiskStore> diskInfo = si.getHardware().getDiskStores();
+                    List<OSFileStore> diskSoft = si.getOperatingSystem().getFileSystem().getFileStores();
 
-                        System.out.println();//print for tidiness
-                        //set up
+                    System.out.println("\n=== DISK INFORMATION ===");
+                    System.out.println("Hardware disks found: " + diskInfo.size());
+                    System.out.println("File stores found: " + diskSoft.size());
 
-                        diskInfo.get(i).updateAttributes();//recent values
-                        diskSoft.get(i).updateAttributes();
-                        OperatingSystem os=si.getOperatingSystem();//new object
-                        OSFileStore currentDisk =os.getFileSystem().getFileStores().get(i);//current disk
+                    int minSize = Math.min(diskInfo.size(), diskSoft.size());
 
-                        System.out.println(currentDisk.getLabel()+", "+currentDisk.getName());
-                        System.out.println("it uses the "+os.getFileSystem().getFileStores().get(0).getType()+" file system");
+                    for (int i = 0; i < minSize; i++) {
+                        HWDiskStore disk = diskInfo.get(i);
+                        OSFileStore currentDisk = diskSoft.get(i);
 
-                        double diskSize= currentDisk.getTotalSpace();
-                        double diskRemaining= currentDisk.getFreeSpace();
-                        double diskUsed= diskSize-diskRemaining;
-
-
-                        //section for total size in units
-
-                        if (diskSize >= 1000000 && diskSize < 1000000000) {//makes MB if best
-                            int diskSizeUnit = (int)(diskSize / 1000000);
-                            System.out.println("Disk has " + diskSizeUnit + "MB total");
-                        }
-                        if (diskSize >= 1000000000) {//makes GB if best
-                            int diskSizeUnit =  (int)(diskSize / 1000000000);
-                            if (diskSizeUnit>=1000){//if TB is best
-                                double diskSizeBigUnit=(((double)(diskSizeUnit/10))/100);
-                                System.out.println("Disk has " + diskSizeBigUnit + " TB total");
-                            }
-                            else{
-                                System.out.println("Disk has " + diskSizeUnit + " GB total");
-                            }
-                        }
-                        if (diskSize < 1000000) {//makes Bytes if nothing else applies
-                            int diskSizeUnit = (int) diskSize;
-                            System.out.println("Disk has " + diskSizeUnit + "Bytes total");
-                        }
-
-                        // section to get amt disk used int units
-
-                        if (diskUsed >= 1000000 && diskUsed < 1000000000) {//makes MB if best
-                            int diskUsedUnit = (int) (diskUsed / 1000000);
-                            System.out.println("Disk has " + diskUsedUnit + "MB in use");
-                        }
-                        if (diskSize >= 1000000000) {//makes GB if best
-                            int diskUsedUnit = (int) (diskUsed / 1000000000);
-                            System.out.println("Disk has " + diskUsedUnit + "GB in use");
-                        }
-                        if (diskSize < 1000000) {//makes Bytes if nothing else applies
-                            int diskUsedUnit = (int) diskUsed;
-                            System.out.println("Disk has " + diskUsedUnit + "Bytes in use");
-                        }
-
-                        //section to get amount of disk free in units
-
-                        if (diskRemaining >= 1000000 && diskRemaining < 1000000000) {//makes MB if best
-                            int diskRemainingUnit = (int) (diskRemaining / 1000000);
-                            System.out.println("Disk has " + diskRemainingUnit + "MB free");
-                        }
-                        if (diskSize >= 1000000000) {//makes GB if best
-                            int diskRemainingUnit = (int) (diskRemaining / 1000000000);
-                            System.out.println("Disk has " + diskRemainingUnit + "GB free");
-                        }
-                        if (diskSize < 1000000) {//makes Bytes if nothing else applies
-                            int diskRemainingUnit = (int) diskRemaining;
-                            System.out.println("Disk has " + diskRemainingUnit + "Bytes free");
-                        }
-
-                        //amount of disk free as %
-                        double diskPercentInt = (int) ((diskUsed / diskSize) * 10000);
-                        double diskPercent = diskPercentInt / 100;
-                        System.out.println(diskPercent + "% of the disk's space is in use");
-
-
-                        //Section for Read and write speeds
-                        HWDiskStore disk=diskInfo.get(0);
                         disk.updateAttributes();
-                        //get initial values
-                        long transTime1 = disk.getTransferTime();
-                        long reads1=disk.getReads();
-                        long readsMB1=disk.getReadBytes();
-                        long writes1=disk.getWrites();
-                        long writesMB1=disk.getWriteBytes();
-                        //wait
-                        System.out.print("please wait while disk usage is calculated");
+                        currentDisk.updateAttributes();
+
+                        System.out.println("\n--------------------------------------------------");
+                        System.out.println("Disk " + (i + 1) + ": " + currentDisk.getLabel() + " (" + currentDisk.getName() + ")");
+                        System.out.println("File System Type: " + currentDisk.getType());
+                        System.out.println("Mount Point: " + currentDisk.getMount());
+                        System.out.println("Description: " + currentDisk.getDescription());
+
+                        double totalSpace = currentDisk.getTotalSpace();
+                        double freeSpace = currentDisk.getFreeSpace();
+                        double usedSpace = totalSpace - freeSpace;
+
+                        double usedPercent = (usedSpace / totalSpace) * 100.0;
+
+                        System.out.printf("Total Space: %.2f GB%n", totalSpace / 1_000_000_000);
+                        System.out.printf("Used Space : %.2f GB (%.1f%%)%n", usedSpace / 1_000_000_000, usedPercent);
+                        System.out.printf("Free Space : %.2f GB%n", freeSpace / 1_000_000_000);
+
+                        int barLength2 = 30;
+                        int barFilled3 = (int) (barLength2 * usedPercent / 100);
+                        String bar2 = "[" + "#".repeat(barFilled3) + "-".repeat(barLength2 - barFilled3) + "]";
+                        System.out.println("Usage: " + bar2);
+
+                        System.out.println("\nMeasuring disk activity... please wait 5 seconds...");
+                        long readsStart = disk.getReadBytes();
+                        long writesStart = disk.getWriteBytes();
+                        long timeStart = System.currentTimeMillis();
+
                         try {
                             Thread.sleep(5000);
-                        }
-                        catch (InterruptedException ignored) {
+                        } catch (InterruptedException ignored) {}
 
-                        }
-                        System.out.println(".......done");
-                        disk.updateAttributes();//update values
+                        disk.updateAttributes();
 
-                        //get new values
-                        long transTime2 = disk.getTransferTime();
-                        long reads2=disk.getReads();
-                        long readsMB2=disk.getReadBytes();
-                        long writes2=disk.getWrites();
-                        long writesMB2=disk.getWriteBytes();
+                        long readsEnd = disk.getReadBytes();
+                        long writesEnd = disk.getWriteBytes();
+                        long elapsed = System.currentTimeMillis() - timeStart;
 
-                        //get reads/writes in time elapsed
-                        double transTimeTotal=transTime2 - transTime1;
-                        double readsTotal=reads2 - reads1;
-                        long readsMBTotal=readsMB2 - readsMB1;
-                        double writesTotal=writes2 - writes1;
-                        double writesMBTotal=writesMB2 - writesMB1;
+                        double readSpeedMBs = (readsEnd - readsStart) / 1_000_000.0 / (elapsed / 1000.0);
+                        double writeSpeedMBs = (writesEnd - writesStart) / 1_000_000.0 / (elapsed / 1000.0);
 
-                        double writePercent=(long)((transTimeTotal/5000)*10000);
-                        //Liza
-                        double readSpeedMB = (readsMBTotal) / 1000.0 / 1000 / 5; // per second  //1000 not 1024 because MB is in root 10, while MiB is root 2, I think?
-                        double writeSpeedMB = (writesMBTotal) / 1000.0 / 1000 / 5; // per second  //Feel Free to disagree
-                        System.out.println("This drive is currently in use an average of "+writePercent/100+"% of the time");
-                        System.out.println("This drive is currently conducting an average of "+(int) ((((readsTotal+writesTotal)/transTimeTotal)/5)*1000)+" reads/writes per second");
-                        System.out.printf("Read Speed: %.2f MB/s%n", readSpeedMB);
-                        System.out.printf("Write Speed: %.2f MB/s%n", writeSpeedMB);
-                        //
+                        System.out.printf("Read Speed : %.2f MB/s%n", readSpeedMBs);
+                        System.out.printf("Write Speed: %.2f MB/s%n", writeSpeedMBs);
+                        System.out.println("--------------------------------------------------");
                     }
+
+                    if (minSize == 0) {
+                        System.out.println("No disks detected or unable to retrieve disk info.");
+                    }
+
                     break;
 
                 // --- PCI INFO ---
@@ -512,7 +455,7 @@ public class Main {
                     //key-value
                     System.out.println("Current User: " + System.getProperty("user.name"));
                     System.out.println("Home Directory: " + System.getProperty("user.home"));
-                    //host name for IP adress
+                    //host name for IP address
                     System.out.println("Host Name: " + os21.getNetworkParams().getHostName());
                     System.out.println("Domain Name: " + os21.getNetworkParams().getDomainName());
                     System.out.println("DNS Servers: " + Arrays.toString(os21.getNetworkParams().getDnsServers()));
