@@ -4,6 +4,9 @@ target/
 !**/src/test/**/target/
 .kotlin
 
+### System Info Logs ###
+system-info-logs/
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml

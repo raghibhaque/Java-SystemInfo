@@ -12,11 +12,18 @@ import oshi.software.os.OSProcess;
 import oshi.util.EdidUtil;
 import oshi.software.os.OSThread;
 import oshi.software.os.OSService;
+import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         SystemInfo si = new SystemInfo();
+        
+        // Set up logging folder and file
+        PrintWriter logWriter = setupLogging();
+        redirectSystemOut(logWriter);
 
         while (true) {
             System.out.println("===MENU===" +
@@ -522,6 +529,9 @@ public class Main {
 
                 case 14:
                     System.out.println("Exiting program...");
+                    if (logWriter != null) {
+                        logWriter.close();
+                    }
                     sc.close();
                     return;
                 default:
@@ -535,5 +545,60 @@ public class Main {
             }
             sc.nextLine();
         }
+    }
+
+    /**
+     * Sets up logging to a file in a dedicated folder with timestamp.
+     */
+    private static PrintWriter setupLogging() {
+        try {
+            // Create logs folder if it doesn't exist
+            File logsFolder = new File("system-info-logs");
+            if (!logsFolder.exists()) {
+                logsFolder.mkdirs();
+                System.out.println("Created logs folder: " + logsFolder.getAbsolutePath());
+            }
+
+            // Create a timestamped file
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+            String timestamp = now.format(formatter);
+            String logFileName = "system-info-logs/system_info_" + timestamp + ".txt";
+
+            // Create the file writer
+            FileWriter fw = new FileWriter(logFileName, true);
+            PrintWriter pw = new PrintWriter(fw, true);
+            
+            // Log the session start
+            pw.println("=== System Information Log ===");
+            pw.println("Session Started: " + now);
+            pw.println("=============================================\n");
+            pw.flush();
+            
+            System.out.println("Log file created: " + logFileName);
+            return pw;
+        } catch (IOException e) {
+            System.out.println("Error setting up logging: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Redirects System.out to write to both console and log file.
+     */
+    private static void redirectSystemOut(PrintWriter logWriter) {
+        PrintStream originalOut = System.out;
+        
+        System.setOut(new PrintStream(new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                originalOut.write(b);
+                if (logWriter != null) {
+                    logWriter.write(b);
+                    logWriter.flush();
+                }
+            }
+        }, true));
     }
 }
